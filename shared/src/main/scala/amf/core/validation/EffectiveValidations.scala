@@ -22,9 +22,18 @@ class EffectiveValidations(val effective: mutable.HashMap[String, ValidationSpec
     // we aggregate all of the validations to the total validations map
     profile.validations.foreach { update }
 
-    profile.infoLevel.foreach(id => setLevel(id, SeverityLevels.INFO))
-    profile.warningLevel.foreach(id => setLevel(id, SeverityLevels.WARNING))
-    profile.violationLevel.foreach(id => setLevel(id, SeverityLevels.VIOLATION))
+    profile.infoLevel.foreach { id =>
+      val validation = setLevel(id, SeverityLevels.INFO)
+      setNested(profile,validation)
+    }
+    profile.warningLevel.foreach { id =>
+      val validation = setLevel(id, SeverityLevels.WARNING)
+      setNested(profile,validation)
+    }
+    profile.violationLevel.foreach { id =>
+      val validation = setLevel(id, SeverityLevels.VIOLATION)
+      setNested(profile,validation)
+    }
 
     profile.disabled foreach { id =>
       val validationName = if (!id.startsWith("http://") && !id.startsWith("https://") && !id.startsWith("file:/")) {
@@ -32,8 +41,13 @@ class EffectiveValidations(val effective: mutable.HashMap[String, ValidationSpec
       } else { id }
       this.effective.remove(validationName)
     }
-
     this
+  }
+
+  protected def setNested(profile: ValidationProfile, validation: ValidationSpecification): Unit = {
+    profile.validations.filter(_.nested.contains(validation.name)).foreach { nestedValidation =>
+      effective.put(nestedValidation.id, nestedValidation)
+    }
   }
 
   def allEffective(specifications: Seq[ValidationSpecification]): EffectiveValidations = {
@@ -61,6 +75,7 @@ class EffectiveValidations(val effective: mutable.HashMap[String, ValidationSpec
           case SeverityLevels.VIOLATION => violation += (validationName -> validation)
         }
         effective += (validationName -> validation)
+        validation
     }
   }
 
