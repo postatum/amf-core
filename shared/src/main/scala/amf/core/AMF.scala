@@ -45,16 +45,13 @@ object AMF {
     case feature: AMFPayloadValidationPlugin => AMFPluginsRegistry.registerPayloadValidationPlugin(feature)
   }
 
-  protected def processInitializations(plugins: Seq[AMFPlugin]): Future[Unit] = {
-    if (plugins.isEmpty) {
-      Future {}
-    } else {
+  protected def processInitializations(plugins: Seq[AMFPlugin]): Future[Unit] =
+    if (plugins.isEmpty) Future.successful(Unit)
+    else {
       val nextPlugin = plugins.head
-      if (initializedPlugins.contains(nextPlugin.ID)) {
-
-        processInitializations(plugins.tail)
-      } else {
-        val notInitializedYet = nextPlugin.dependencies().filter(plugin => !initializedPlugins.contains(plugin.ID))
+      if (initializedPlugins.contains(nextPlugin.ID)) processInitializations(plugins.tail)
+      else {
+        val notInitializedYet = nextPlugin.dependencies().filterNot(plugin => initializedPlugins.contains(plugin.ID))
         processInitializations(notInitializedYet) flatMap { _ =>
           nextPlugin.init() map { _ =>
             initializedPlugins += nextPlugin.ID
@@ -64,5 +61,4 @@ object AMF {
         }
       }
     }
-  }
 }

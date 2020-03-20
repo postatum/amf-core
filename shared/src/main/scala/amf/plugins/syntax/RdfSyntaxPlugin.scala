@@ -14,7 +14,7 @@ object RdfSyntaxPlugin extends AMFSyntaxPlugin with PlatformSecrets {
 
   override val ID = "Rdf"
 
-  override def init(): Future[AMFPlugin] = Future { this }
+  override def init(): Future[AMFPlugin] = Future.successful(this)
 
   override def dependencies(): Seq[AMFPlugin] = Nil
 
