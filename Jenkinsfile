@@ -31,7 +31,7 @@ pipeline {
       when {
         anyOf {
           branch 'master'
-          branch 'new_model'
+          branch 'futures-change'
         }
 
       }
