@@ -81,6 +81,11 @@ case class PropertyConstraint(ramlPropertyId: String,
                               lessThanOrEqualsToProperty: Option[String] = None,
                              )
 
+case class QueryConstraint(
+                            prefixes: Map[String,String],
+                            query: String
+                          )
+
 case class ValidationSpecification(name: String,
                                    // shacl:message
                                    message: String,
@@ -130,7 +135,11 @@ case class ValidationSpecification(name: String,
                                   /*
                                    * transition from JS functions to complex ones
                                    */
-                                   replacesFunctionConstraint: Option[String] = None
+                                   replacesFunctionConstraint: Option[String] = None,
+                                  /*
+                                   * Query validation
+                                   */
+                                   query: Option[QueryConstraint] = None
                                   ) {
 
   val id: String = {

@@ -61,6 +61,8 @@ class TrunkValidator extends SHACLValidator {
 
   override def shapes(shapes: Seq[ValidationSpecification], functionsUrl: String): RdfModel =
     throw new Exception("Error, validation is not supported")
+
+  override def supportsJSFunctions: Boolean = false
 }
 
 case class TrunkPlatform(content: String,
