@@ -91,6 +91,7 @@ class ObjectNode(override val fields: Fields, val annotations: Annotations) exte
 
   def addProperty(propertyOrUri: String, objectValue: DataNode, annotations: Annotations = Annotations()): this.type = {
     val property = ensurePlainProperty(propertyOrUri)
+    objectValue.set(DataNodeModel.Name, property)
     addPropertyByField(createField(property), objectValue, annotations)
     this
   }

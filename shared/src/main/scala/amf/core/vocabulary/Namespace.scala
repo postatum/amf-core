@@ -73,6 +73,7 @@ object Namespace {
     "amf-validation" -> AmfValidation,
     "amf-render"     -> AmfRender,
     "raml-shapes"    -> Shapes,
+    "shapes"         -> Shapes,
     "data"           -> Data,
     "sourcemaps"     -> SourceMaps,
     "meta"           -> Meta,
