@@ -151,6 +151,8 @@ class ParserTest extends FunSuite {
 
       override def shapes(shapes: Seq[ValidationSpecification], functionsUrl: String): RdfModel =
         throw new Exception("Validation not supported")
+
+      override def supportsJSFunctions: Boolean = false
     }
   }
 }
