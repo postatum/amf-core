@@ -39,4 +39,13 @@ trait FutureDeclarations {
     promises.values.flatten.filter(!_.resolved).foreach(_.fail())
   }
 
+  def addDeclarationsFrom(context: ParserContext): FutureDeclarations = {
+    context.futureDeclarations.promises.filter(t => t._2.nonEmpty).foreach {
+      case (key: String, promisesList: Seq[DeclarationPromise]) =>
+        val currentPromiseList = promises.getOrElse(key, Seq[DeclarationPromise]())
+        promises.put(key, currentPromiseList ++ promisesList)
+    }
+    this
+  }
+
 }
