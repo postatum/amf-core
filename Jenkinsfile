@@ -18,9 +18,6 @@ pipeline {
       }
     }
     stage('Coverage') {
-      when {
-        branch 'master'
-      }
       steps {
         wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
           withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sonarqube-official', passwordVariable: 'SONAR_SERVER_TOKEN', usernameVariable: 'SONAR_SERVER_URL']]) {
@@ -30,12 +27,6 @@ pipeline {
       }
     }
     stage('Publish') {
-      when {
-        anyOf {
-          branch 'master'
-          branch 'custom_validations_expanded'
-        }
-      }
       steps {
         wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
           sh '''
@@ -47,9 +38,6 @@ pipeline {
       }
     }
     stage('Tag version') {
-      when {
-        branch 'master'
-      }
       steps {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'github-exchange', passwordVariable: 'GITHUB_PASS', usernameVariable: 'GITHUB_USER']]) {
           sh '''#!/bin/bash
