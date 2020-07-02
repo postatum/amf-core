@@ -9,7 +9,7 @@ import org.mulesoft.common.io.Output
 import org.yaml.model.{YComment, YDocument, YMap, YNode}
 import org.yaml.parser.{JsonParser, YamlParser}
 import org.yaml.render.{JsonRender, JsonRenderOptions, YamlRender}
-
+import org.mulesoft.common.core.Strings
 import scala.concurrent.ExecutionContext
 
 import scala.concurrent.Future
@@ -45,13 +45,9 @@ object SYamlSyntaxPlugin extends AMFSyntaxPlugin with PlatformSecrets {
         case "json" => JsonParser.withSource(text, ctx.rootContextDocument)(ctx.eh)
         case _      => YamlParser(text, ctx.rootContextDocument)(ctx.eh).withIncludeTag("!include")
       }
-      val parts   = parser.parse(keepTokens = false)
-      val comment = parts collectFirst { case c: YComment => c.metaText }
-      val doc = parts collectFirst { case d: YDocument => d } match {
-        case Some(d) => d
-        case None    => YDocument(Array(YNode(YMap.empty)), ctx.rootContextDocument)
-      }
-      Some(SyamlParsedDocument(doc, comment))
+      val document   = parser.document()
+      val comment = document.children collectFirst { case c: YComment => c.metaText }
+      Some(SyamlParsedDocument(document, comment))
     }
   }
 
