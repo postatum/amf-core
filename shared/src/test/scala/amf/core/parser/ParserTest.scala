@@ -1,9 +1,12 @@
 package amf.core.parser
 
+import amf.client.parse.IgnoringErrorHandler
+import amf.core.client.ParsingOptions
 import amf.core.model.document.BaseUnit
 import amf.core.rdf.RdfModel
 import amf.core.services.ValidationOptions
 import amf.core.validation.core.{SHACLValidator, ValidationReport, ValidationSpecification}
+import amf.plugins.syntax.SYamlSyntaxPlugin
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 import org.yaml.model._
@@ -81,6 +84,21 @@ class ParserTest extends FunSuite {
     nodeValue shouldBe a[YMap]
 
     assertDocumentRoot(nodeValue.asInstanceOf[YMap], assertOasInclude)
+  }
+
+  test("Test empty YAML with comment") {
+    val context = ParserContext("", Seq.empty, eh = IgnoringErrorHandler())
+    val parsed = SYamlSyntaxPlugin.parse("application/yaml", "#%Header", context, ParsingOptions())
+    parsed.isDefined shouldBe true
+    parsed.get match {
+      case p: SyamlParsedDocument =>
+        p.document.children.size should be(1)
+        val nodeValue = p.document.node.value
+        nodeValue shouldNot be(YNode.Null)
+        nodeValue shouldBe a[YMap]
+      case _ =>
+        fail("parsed document was not SyamlParsedDocument")
+    }
   }
 
   private def assertRamlInclude(entry: YMapEntry) = {

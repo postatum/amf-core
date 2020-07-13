@@ -6,12 +6,12 @@ import amf.core.parser.{ParsedDocument, ParserContext, SyamlParsedDocument}
 import amf.core.rdf.RdfModelDocument
 import amf.core.unsafe.PlatformSecrets
 import org.mulesoft.common.io.Output
-import org.yaml.model.{YComment, YDocument, YMap, YNode}
+import org.yaml.model.{YComment, YDocument, YFail, YMap, YNode}
 import org.yaml.parser.{JsonParser, YamlParser}
 import org.yaml.render.{JsonRender, JsonRenderOptions, YamlRender}
 import org.mulesoft.common.core.Strings
-import scala.concurrent.ExecutionContext
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 object SYamlSyntaxPlugin extends AMFSyntaxPlugin with PlatformSecrets {
@@ -45,8 +45,12 @@ object SYamlSyntaxPlugin extends AMFSyntaxPlugin with PlatformSecrets {
         case "json" => JsonParser.withSource(text, ctx.rootContextDocument)(ctx.eh)
         case _      => YamlParser(text, ctx.rootContextDocument)(ctx.eh).withIncludeTag("!include")
       }
-      val document   = parser.document()
-      val comment = document.children collectFirst { case c: YComment => c.metaText }
+      val (document, comment) = parser.document() match {
+        case d if d.isNull =>
+          (YDocument(Array(YNode(YMap.empty)), ctx.rootContextDocument), d.children collectFirst { case c: YComment => c.metaText })
+        case d =>
+          (d, d.children collectFirst { case c: YComment => c.metaText })
+      }
       Some(SyamlParsedDocument(document, comment))
     }
   }
