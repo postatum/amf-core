@@ -6,13 +6,11 @@ import amf.core.parser.{ParsedDocument, ParserContext, SyamlParsedDocument}
 import amf.core.rdf.RdfModelDocument
 import amf.core.unsafe.PlatformSecrets
 import org.mulesoft.common.io.Output
-import org.yaml.model.{YComment, YDocument, YFail, YMap, YNode}
+import org.yaml.model.{YComment, YDocument, YMap, YNode}
 import org.yaml.parser.{JsonParser, YamlParser}
 import org.yaml.render.{JsonRender, JsonRenderOptions, YamlRender}
-import org.mulesoft.common.core.Strings
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object SYamlSyntaxPlugin extends AMFSyntaxPlugin with PlatformSecrets {
 
