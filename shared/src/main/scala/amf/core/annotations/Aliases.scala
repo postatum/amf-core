@@ -1,5 +1,6 @@
 package amf.core.annotations
 
+import amf.core.model.document.BaseUnit
 import amf.core.model.domain._
 case class Aliases(aliases: Set[(Aliases.Alias, (Aliases.FullUrl, Aliases.RelativeUrl))])
     extends SerializableAnnotation
@@ -40,4 +41,16 @@ object Aliases extends AnnotationGraphLoader {
               }
           })
           .toSet))
+}
+
+object AliasDeclaration {
+  def apply(base: BaseUnit, aliasName: String, referenceId: String, relativeUrl: String): Unit = {
+    val alias = (aliasName, (referenceId, relativeUrl))
+    base.annotations.find(classOf[Aliases]) match {
+      case Some(aliases) =>
+        base.annotations.reject(_.isInstanceOf[Aliases])
+        base.add(aliases.copy(aliases = aliases.aliases + alias))
+      case None => base.add(Aliases(Set(alias)))
+    }
+  }
 }
