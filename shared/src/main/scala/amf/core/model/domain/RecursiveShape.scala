@@ -18,8 +18,6 @@ class RecursiveShape(override val fields: Fields, override val annotations: Anno
 
   def withFixpointTarget(target: Shape): this.type = {
     internalFixpointTarget = Some(target)
-    closureShapes.add(target)
-    target.closureShapes.foreach(closureShapes.add)
     this
   }
 
@@ -33,7 +31,6 @@ class RecursiveShape(override val fields: Fields, override val annotations: Anno
     cloned.id = this.id
     copyFields(recursionErrorHandler, cloned, None, traversal)
     internalFixpointTarget.foreach(cloned.withFixpointTarget)
-    closureShapes.foreach(cloned.closureShapes.add)
     cloned
   }
 

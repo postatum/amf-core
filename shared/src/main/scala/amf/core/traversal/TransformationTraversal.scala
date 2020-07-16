@@ -63,7 +63,6 @@ class TransformationTraversal(val transformation: TransformationData) {
     Option(traverse(fieldEntry.obj, traversalPath)) match {
       case Some(transformedValue: AmfObject) =>
         element.fields.setWithoutId(field, transformedValue, lexicalAnnotationsOf(value))
-        addClosuresToRecursion(element, transformedValue)
       case Some(_) => // ignore
       case None    => element.fields.removeField(field)
     }
@@ -79,7 +78,6 @@ class TransformationTraversal(val transformation: TransformationData) {
       .map {
         case elem: AmfObject =>
           val transformedValue = traverse(elem, traversalPath)
-          addClosuresToRecursion(element, transformedValue)
           Some(transformedValue)
         case other =>
           Some(other)
@@ -87,17 +85,6 @@ class TransformationTraversal(val transformation: TransformationData) {
       .filter(_.isDefined)
       .map(_.get)
     element.fields.setWithoutId(field, AmfArray(newElements), value.annotations)
-  }
-
-  private def addClosuresToRecursion(element: AmfObject, transformedValue: AmfObject): Unit = {
-    element match {
-      case s: Shape if transformedValue.isInstanceOf[RecursiveShape] =>
-        transformedValue
-          .asInstanceOf[RecursiveShape]
-          .fixpointTarget
-          .foreach(t => s.closureShapes += t)
-      case _ => // ignore
-    }
   }
 }
 

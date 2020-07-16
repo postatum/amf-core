@@ -17,8 +17,6 @@ import scala.collection.mutable
 abstract class Shape extends DomainElement with Linkable with NamedDomainElement with ShapeHelper {
 
   override protected def nameField: Field = Name
-// used at runtime during validation
-  val closureShapes: mutable.Set[Shape] = mutable.Set()
 
   def displayName: StrField                              = fields.field(DisplayName)
   def description: StrField                              = fields.field(Description)
@@ -164,7 +162,6 @@ abstract class Shape extends DomainElement with Linkable with NamedDomainElement
 
   def copyShape(a: Annotations): this.type = {
     val copiedShape = copyElement(a).asInstanceOf[this.type]
-    copiedShape.closureShapes ++= closureShapes
     copiedShape
   }
 }
