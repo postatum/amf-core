@@ -5,8 +5,12 @@ import java.io.{File, Writer}
 import amf.client.convert.CoreClientConverters._
 import amf.client.environment.Environment
 import amf.client.model.document.BaseUnit
+import amf.client.render.ShapeRenderOptions
 import amf.core.AMFSerializer
-import amf.core.emitter.{RenderOptions => InternalRenderOptions}
+import amf.core.emitter.{
+  RenderOptions => InternalRenderOptions,
+  ShapeRenderOptions => InternalShapeRenderOptions
+}
 import amf.core.model.document.{BaseUnit => InternalBaseUnit}
 import amf.core.unsafe.PlatformSecrets
 import org.mulesoft.common.io.Output._
@@ -32,7 +36,9 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
     * It must throw an UnsupportedOperation exception in platforms without support to write to the file system
     * (like the browser) or if a remote URL is provided.
     */
-  def generateFile(unit: BaseUnit, output: File): ClientFuture[Unit] = generateFile(unit, output, RenderOptions())
+  def generateFile(unit: BaseUnit, output: File): ClientFuture[Unit] = {
+    generateFile(unit, output, RenderOptions(), ShapeRenderOptions())
+  }
 
   /**
     * Asynchronously renders the syntax text and stores it in the file pointed by the provided URL.
@@ -40,7 +46,25 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
     * (like the browser) or if a remote URL is provided.
     */
   def generateFile(unit: BaseUnit, output: File, options: RenderOptions): ClientFuture[Unit] = {
-    generateFile(unit, "file://" + output.getAbsolutePath, options)
+    generateFile(unit, "file://" + output.getAbsolutePath, options, ShapeRenderOptions())
+  }
+
+  /**
+    * Asynchronously renders the syntax text and stores it in the file pointed by the provided URL.
+    * It must throw an UnsupportedOperation exception in platforms without support to write to the file system
+    * (like the browser) or if a remote URL is provided.
+    */
+  def generateFile(unit: BaseUnit, output: File, shapeOptions: ShapeRenderOptions): ClientFuture[Unit] = {
+    generateFile(unit, "file://" + output.getAbsolutePath, RenderOptions(), shapeOptions)
+  }
+
+  /**
+    * Asynchronously renders the syntax text and stores it in the file pointed by the provided URL.
+    * It must throw an UnsupportedOperation exception in platforms without support to write to the file system
+    * (like the browser) or if a remote URL is provided.
+    */
+  def generateFile(unit: BaseUnit, output: File, options: RenderOptions, shapeOptions: ShapeRenderOptions): ClientFuture[Unit] = {
+    generateFile(unit, "file://" + output.getAbsolutePath, options, shapeOptions)
   }
 
   /**
@@ -49,7 +73,9 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
     * (like the browser) or if a remote URL is provided.
     */
   @JSExport
-  def generateFile(unit: BaseUnit, url: String): ClientFuture[Unit] = generateFile(unit, url, RenderOptions())
+  def generateFile(unit: BaseUnit, url: String): ClientFuture[Unit] = {
+    generateFile(unit, url, RenderOptions(), ShapeRenderOptions())
+  }
 
   /**
     * Asynchronously renders the syntax text and stores it in the file pointed by the provided URL.
@@ -57,65 +83,116 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
     * (like the browser) or if a remote URL is provided.
     */
   @JSExport
-  def generateFile(unit: BaseUnit, url: String, options: RenderOptions): ClientFuture[Unit] =
-    generate(unit._internal, url, InternalRenderOptions(options)).asClient
+  def generateFile(unit: BaseUnit, url: String, options: RenderOptions, shapeOptions: ShapeRenderOptions): ClientFuture[Unit] =
+    generate(unit._internal, url, InternalRenderOptions(options), InternalShapeRenderOptions(shapeOptions)).asClient
 
   /** Asynchronously renders the syntax text and returns it. */
   @JSExport
-  def generateString(unit: BaseUnit): ClientFuture[String] = generateString(unit, RenderOptions())
+  def generateString(unit: BaseUnit): ClientFuture[String] = {
+    generateString(unit, RenderOptions(), ShapeRenderOptions())
+  }
 
   /** Asynchronously renders the syntax text and returns it. */
   @JSExport
-  def generateString(unit: BaseUnit, options: RenderOptions): ClientFuture[String] =
-    generate(unit._internal, InternalRenderOptions(options)).asClient
+  def generateString(unit: BaseUnit, options: RenderOptions): ClientFuture[String] = {
+    generateString(unit, options, ShapeRenderOptions())
+  }
+
+  /** Asynchronously renders the syntax text and returns it. */
+  @JSExport
+  def generateString(unit: BaseUnit, shapeOptions: ShapeRenderOptions): ClientFuture[String] = {
+    generateString(unit, RenderOptions(), shapeOptions)
+  }
+
+  /** Asynchronously renders the syntax text and returns it. */
+  @JSExport
+  def generateString(unit: BaseUnit, options: RenderOptions, shapeOptions: ShapeRenderOptions): ClientFuture[String] =
+    generate(unit._internal, InternalRenderOptions(options), InternalShapeRenderOptions(shapeOptions)).asClient
 
   /** Asynchronously renders the syntax to a provided writer and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, options: RenderOptions, writer: Writer): ClientFuture[Unit] =
-    generate(unit._internal, InternalRenderOptions(options), writer).asClient
+    generateToWriter(unit, options, ShapeRenderOptions(), writer)
+
+  /** Asynchronously renders the syntax to a provided writer and returns it. */
+  @JSExport
+  def generateToWriter(unit: BaseUnit, shapeOptions: ShapeRenderOptions, writer: Writer): ClientFuture[Unit] =
+    generateToWriter(unit, RenderOptions(), shapeOptions, writer)
+
+  /** Asynchronously renders the syntax to a provided writer and returns it. */
+  @JSExport
+  def generateToWriter(unit: BaseUnit, options: RenderOptions, shapeOptions: ShapeRenderOptions, writer: Writer): ClientFuture[Unit] =
+    generate(unit._internal, InternalRenderOptions(options), InternalShapeRenderOptions(shapeOptions), writer).asClient
 
   /** Asynchronously renders the syntax to a provided writer and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, writer: Writer): ClientFuture[Unit] =
-    generateToWriter(unit, RenderOptions(), writer)
+    generateToWriter(unit, RenderOptions(), ShapeRenderOptions(), writer)
 
   /** Asynchronously renders the syntax to a provided string buffer with limited capacity and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, options: RenderOptions, writer: LimitedStringBuffer): ClientFuture[Unit] =
-    generate(unit._internal, InternalRenderOptions(options), writer).asClient
+    generateToWriter(unit, options, ShapeRenderOptions(), writer)
+
+  /** Asynchronously renders the syntax to a provided string buffer with limited capacity and returns it. */
+  @JSExport
+  def generateToWriter(unit: BaseUnit, shapeOptions: ShapeRenderOptions, writer: LimitedStringBuffer): ClientFuture[Unit] =
+    generateToWriter(unit, RenderOptions(), shapeOptions, writer)
+
+  /** Asynchronously renders the syntax to a provided string buffer with limited capacity and returns it. */
+  @JSExport
+  def generateToWriter(unit: BaseUnit, options: RenderOptions, shapeOptions: ShapeRenderOptions, writer: LimitedStringBuffer): ClientFuture[Unit] =
+    generate(unit._internal, InternalRenderOptions(options), InternalShapeRenderOptions(shapeOptions), writer).asClient
 
   /** Asynchronously renders the syntax to a provided string buffer with limited capacity and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, writer: LimitedStringBuffer): ClientFuture[Unit] =
-    generateToWriter(unit, RenderOptions(), writer)
+    generateToWriter(unit, RenderOptions(), ShapeRenderOptions(), writer)
 
   /** Asynchronously renders the syntax to a provided builder and returns it. */
   protected def genToBuilder[T](unit: BaseUnit, builder: DocBuilder[T]): ClientFuture[Unit] =
-    genToBuilder(unit, RenderOptions(), builder)
+    genToBuilder(unit, RenderOptions(), ShapeRenderOptions(), builder)
 
   /** Asynchronously renders the syntax to a provided builder and returns it. */
   protected def genToBuilder[T](unit: BaseUnit, options: RenderOptions, builder: DocBuilder[T]): ClientFuture[Unit] =
-    generate(unit._internal, InternalRenderOptions(options), builder).asClient
+    genToBuilder(unit, options, ShapeRenderOptions(), builder)
+
+  /** Asynchronously renders the syntax to a provided builder and returns it. */
+  protected def genToBuilder[T](unit: BaseUnit, shapeOptions: ShapeRenderOptions, builder: DocBuilder[T]): ClientFuture[Unit] =
+    genToBuilder(unit, RenderOptions(), shapeOptions, builder)
+
+  /** Asynchronously renders the syntax to a provided builder and returns it. */
+  protected def genToBuilder[T](unit: BaseUnit, options: RenderOptions, shapeOptions: ShapeRenderOptions, builder: DocBuilder[T]): ClientFuture[Unit] =
+    generate(unit._internal, InternalRenderOptions(options), InternalShapeRenderOptions(shapeOptions), builder).asClient
 
   /**
     * Generates the syntax text and stores it in the file pointed by the provided URL.
     * It must throw a UnsupportedOperation exception in platforms without support to write to the file system
     * (like the browser) or if a remote URL is provided.
     */
-  private def generate(unit: InternalBaseUnit, url: String, options: InternalRenderOptions): Future[Unit] = {
-    new AMFSerializer(unit, mediaType, vendor, options).renderToFile(platform, url)
+  private def generate(unit: InternalBaseUnit,
+                       url: String,
+                       options: InternalRenderOptions,
+                       shapeOptions: InternalShapeRenderOptions): Future[Unit] = {
+    new AMFSerializer(unit, mediaType, vendor, options, shapeOptions).renderToFile(platform, url)
   }
 
-  private def generate(unit: InternalBaseUnit, options: InternalRenderOptions): Future[String] = {
-    new AMFSerializer(unit, mediaType, vendor, options).renderToString
+  private def generate(unit: InternalBaseUnit,
+                       options: InternalRenderOptions,
+                       shapeOptions: InternalShapeRenderOptions): Future[String] = {
+    new AMFSerializer(unit, mediaType, vendor, options, shapeOptions).renderToString
   }
 
-  private def generate[W: Output](unit: InternalBaseUnit, options: InternalRenderOptions, writer: W): Future[Unit] = {
-    new AMFSerializer(unit, mediaType, vendor, options).renderToWriter(writer)
+  private def generate[W: Output](unit: InternalBaseUnit,
+                                  options: InternalRenderOptions,
+                                  shapeOptions: InternalShapeRenderOptions,
+                                  writer: W): Future[Unit] = {
+    new AMFSerializer(unit, mediaType, vendor, options, shapeOptions).renderToWriter(writer)
   }
 
   private def generate[T](unit: InternalBaseUnit,
                           options: InternalRenderOptions,
+                          shapeOptions: InternalShapeRenderOptions,
                           builder: DocBuilder[T]): Future[Unit] = {
     new AMFSerializer(unit, mediaType, vendor, options).renderToBuilder(builder)
   }
