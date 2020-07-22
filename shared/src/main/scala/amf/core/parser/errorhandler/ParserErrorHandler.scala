@@ -24,12 +24,8 @@ trait ParserErrorHandler extends IllegalTypeHandler with ParseErrorHandler with 
 
   final def handle(node: YPart, e: SyamlException): Unit = handle(node.location, e)
 
-  override def handle(location: SourceLocation, e: SyamlException): Unit = e match {
-    // ignoring errors due to trailing white space
-    case lexer: LexerException if lexer.text.matches("\\s+") => // ignore
-    case _ =>
+  override def handle(location: SourceLocation, e: SyamlException): Unit =
       violation(SyamlError, "", e.getMessage, location)
-  }
 }
 
 
