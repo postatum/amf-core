@@ -10,7 +10,7 @@ import amf.core.errorhandling.{ErrorHandler, UnhandledErrorHandler}
 class ShapeRenderOptions {
 
   private var documentation: Boolean = true
-  private var compactedEmission: Boolean = false
+  private var compactedEmission: Boolean = true
   private var schema: JSONSchemaVersion = JSONSchemaVersions.UNSPECIFIED
 
   private var eh: ErrorHandler       = UnhandledErrorHandler
@@ -21,9 +21,9 @@ class ShapeRenderOptions {
     this
   }
 
-  /** Render shape extracting common types to definitions */
-  def withCompactedEmission: ShapeRenderOptions = {
-    compactedEmission = true
+  /** Render shape without extracting common types to definitions */
+  def withoutCompactedEmission: ShapeRenderOptions = {
+    compactedEmission = false
     this
   }
 
