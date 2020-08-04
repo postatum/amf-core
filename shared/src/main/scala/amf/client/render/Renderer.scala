@@ -5,7 +5,6 @@ import java.io.{File, Writer}
 import amf.client.convert.CoreClientConverters._
 import amf.client.environment.Environment
 import amf.client.model.document.BaseUnit
-import amf.client.render.ShapeRenderOptions
 import amf.core.AMFSerializer
 import amf.core.emitter.{
   RenderOptions => InternalRenderOptions,
