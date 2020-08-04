@@ -2,6 +2,7 @@ package amf.core.validation
 
 import amf.{MessageStyle, OASStyle, RAMLStyle}
 import amf.core.model.document.BaseUnit
+import amf.core.validation.core.ValidationProfile.SeverityLevel
 import amf.core.validation.core.{ValidationResult, ValidationSpecification}
 import amf.core.vocabulary.Namespace
 
@@ -99,15 +100,9 @@ trait ValidationResultProcessor {
     }
   }
 
-  protected def findLevel(id: String, validations: EffectiveValidations, level: String = ""): String = {
-    if (validations.info.get(id).isDefined) {
-      SeverityLevels.INFO
-    } else if (validations.warning.get(id).isDefined) {
-      SeverityLevels.WARNING
-    } else if (validations.violation.get(id).isDefined) {
-      SeverityLevels.VIOLATION
-    } else {
-      SeverityLevels.unapply(level)
-    }
-  }
+  protected def findLevel(id: String,
+                          validations: EffectiveValidations,
+                          default: String = SeverityLevels.VIOLATION): SeverityLevel =
+    validations.findLevel(id).getOrElse(SeverityLevels.unapply(default))
+
 }

@@ -13,6 +13,13 @@ import amf.core.remote.{Platform, Vendor}
 import amf.core.services.RuntimeSerializer
 import amf.plugins.document.graph.AMFGraphPlugin.platform
 import amf.plugins.document.graph.emitter.{FlattenedJsonLdEmitter, JsonLdEmitter}
+import amf.plugins.document.graph.parser.{
+  ExpandedForm,
+  FlattenedForm,
+  JsonLdDocumentForm,
+  JsonLdSerialization,
+  RdfSerialization
+}
 import amf.plugins.syntax.RdfSyntaxPlugin
 import org.mulesoft.common.io.Output
 import org.mulesoft.common.io.Output._
@@ -37,13 +44,12 @@ class AMFSerializer(unit: BaseUnit,
 
   /** Render to doc builder. */
   def renderToBuilder[T](builder: DocBuilder[T])(implicit executor: ExecutionContext): Future[Unit] = Future {
-    if (vendor == Vendor.AMF.name) {
-      if (options.isFlattenedJsonLd) {
-        FlattenedJsonLdEmitter.emit(unit, builder, options)
-      }
-      else {
-        JsonLdEmitter.emit(unit, builder, options)
-      }
+    vendor match {
+      case Vendor.AMF.name =>
+        options.toGraphSerialization match {
+          case JsonLdSerialization(FlattenedForm) => FlattenedJsonLdEmitter.emit(unit, builder, options)
+          case JsonLdSerialization(ExpandedForm)  => JsonLdEmitter.emit(unit, builder, options)
+        }
     }
   }
 
@@ -59,30 +65,33 @@ class AMFSerializer(unit: BaseUnit,
 
   private def render[W: Output](writer: W): Unit = {
     ExecutionLog.log(s"AMFSerializer#render: Rendering to $mediaType ($vendor file) ${unit.location()}")
-    if (vendor == Vendor.AMF.name) {
-      if (!options.isAmfJsonLdSerilization) parseRdf(writer)
-      else {
-        val b = JsonOutputBuilder[W](writer, options.isPrettyPrint)
-        if (options.isFlattenedJsonLd) {
-          FlattenedJsonLdEmitter.emit(unit, b, options)
+    vendor match {
+      case Vendor.AMF.name =>
+        options.toGraphSerialization match {
+          case RdfSerialization()                => emitRdf(writer)
+          case JsonLdSerialization(documentForm) => emitJsonLd(writer, documentForm)
         }
-        else {
-          JsonLdEmitter.emit(unit, b, options)
+      case _ =>
+        val ast = renderAsYDocument()
+        AMFPluginsRegistry.syntaxPluginForMediaType(mediaType) match {
+          case Some(syntaxPlugin) => syntaxPlugin.unparse(mediaType, ast, writer)
+          case None if unit.isInstanceOf[ExternalFragment] =>
+            writer.append(unit.asInstanceOf[ExternalFragment].encodes.raw.value())
+          case _ => throw new Exception(s"Unsupported media type $mediaType and vendor $vendor")
         }
-      }
-      return
-    }
-
-    val ast = renderAsYDocument()
-    AMFPluginsRegistry.syntaxPluginForMediaType(mediaType) match {
-      case Some(syntaxPlugin) => syntaxPlugin.unparse(mediaType, ast, writer)
-      case None if unit.isInstanceOf[ExternalFragment] =>
-        writer.append(unit.asInstanceOf[ExternalFragment].encodes.raw.value())
-      case _ => throw new Exception(s"Unsupported media type $mediaType and vendor $vendor")
     }
   }
 
-  private def parseRdf[W: Output](writer: W): Unit =
+  private def emitJsonLd[W: Output](writer: W, form: JsonLdDocumentForm): Unit = {
+    val b = JsonOutputBuilder[W](writer, options.isPrettyPrint)
+    form match {
+      case FlattenedForm => FlattenedJsonLdEmitter.emit(unit, b, options)
+      case ExpandedForm  => JsonLdEmitter.emit(unit, b, options)
+      case _             => // Ignore
+    }
+  }
+
+  private def emitRdf[W: Output](writer: W): Unit =
     platform.rdfFramework match {
       case Some(r) =>
         val d = RdfModelDocument(r.unitToRdfModel(unit, options))
@@ -108,7 +117,7 @@ class AMFSerializer(unit: BaseUnit,
   private def getDomainPlugin: AMFDocumentPlugin =
     findDomainPlugin().getOrElse {
       throw new Exception(
-          s"Cannot serialize domain model '${unit.location()}' for detected media type $mediaType and vendor $vendor")
+        s"Cannot serialize domain model '${unit.location()}' for detected media type $mediaType and vendor $vendor")
     }
 }
 

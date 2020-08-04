@@ -365,10 +365,14 @@ class AMFCompiler(compilerContext: CompilerContext,
 
   private def verifyMatchingVendor(refVendor: Option[Vendor], rootVendors: Seq[Vendor], nodes: Seq[YNode]): Unit =
     refVendor match {
-      case Some(v) if !rootVendors.contains(v) =>
+      case Some(v) if !rootVendors.contains(v) && !isJsonRef(rootVendors) =>
         nodes.foreach(compilerContext.violation(InvalidCrossSpec, "Cannot reference fragments of another spec", _))
       case _ => // Nothing to do
     }
+
+  private val JSON_REFS = "JSON + Refs"
+
+  private def isJsonRef(vendors: Seq[Vendor]) = vendors.forall(_.name.equals(JSON_REFS))
 
   def verifyValidFragment(refVendor: Option[Vendor], refs: Seq[RefContainer]): Unit = refVendor match {
     case Some(v) if v.isRaml =>

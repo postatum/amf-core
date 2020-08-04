@@ -15,7 +15,7 @@ class CleanReferencesStage()(override implicit val errorHandler: ErrorHandler) e
 
   private def persistReferenceShapes[T <: BaseUnit](model: T): Unit = {
     val referenceShapes = model.references.collect {
-      case fragment: Fragment => Seq(fragment.encodes.id)
+      case fragment: Fragment => Option(fragment.encodes).map(_.id).toList
       case module: Module => module.declares.map(_.id)
     }.flatten
     model.annotations += References(referenceShapes)

@@ -55,4 +55,6 @@ trait SHACLValidator extends RdfFramework {
 
   def emptyRdfModel(): RdfModel
   def shapes(shapes: Seq[ValidationSpecification], functionsUrl: String): RdfModel
+
+  def supportsJSFunctions: Boolean
 }

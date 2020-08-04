@@ -4,6 +4,7 @@ import amf.core.model.document._
 import amf.core.remote.File.FILE_PROTOCOL
 import amf.core.remote.HttpParts.{HTTPS_PROTOCOL, HTTP_PROTOCOL}
 import amf.core.utils.AmfStrings
+import org.yaml.model.YNode.MutRef
 import org.yaml.model.{YNode, YScalar}
 
 import scala.collection.mutable
@@ -28,10 +29,15 @@ case class RefContainer(linkType: ReferenceKind, node: YNode, fragment: Option[S
         case _ => node.location.inputRange
       }
     }else {
-      node.location.inputRange.copy(columnTo = node.location.inputRange.columnTo - fragmentLenght)
+      getRefValue.location.inputRange.copy(columnTo = node.location.inputRange.columnTo - fragmentLenght)
     }
     Range((inputRange.lineFrom, inputRange.columnFrom + markSize), (inputRange.lineTo, inputRange.columnTo-markSize))
   }
+
+  private def getRefValue = node match {
+      case ref: MutRef => ref.origValue
+      case _ => node
+    }
 }
 
 case class ReferenceCollector() {

@@ -4,6 +4,13 @@ import amf.client.render.{RenderOptions => ClientRenderOptions}
 import amf.client.resolve.ClientErrorHandlerConverter._
 import amf.core.errorhandling.{ErrorHandler, UnhandledErrorHandler}
 import amf.core.metamodel.Field
+import amf.plugins.document.graph.parser.{
+  ExpandedForm,
+  FlattenedForm,
+  GraphSerialization,
+  JsonLdSerialization,
+  RdfSerialization
+}
 
 /**
   * Render options
@@ -124,6 +131,18 @@ class RenderOptions {
   def errorHandler: ErrorHandler         = eh
   def isPrettyPrint: Boolean             = prettyPrint
   def isEmitNodeIds: Boolean             = emitNodeIds
+
+  private[amf] def toGraphSerialization: GraphSerialization = {
+    if (isAmfJsonLdSerilization) {
+      if (isFlattenedJsonLd) {
+        JsonLdSerialization(FlattenedForm)
+      } else {
+        JsonLdSerialization(ExpandedForm)
+      }
+    } else {
+      RdfSerialization()
+    }
+  }
 }
 
 object RenderOptions {

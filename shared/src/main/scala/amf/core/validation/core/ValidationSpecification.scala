@@ -2,6 +2,7 @@ package amf.core.validation.core
 
 import amf.core.rdf.RdfModel
 import amf.core.validation.core.ValidationSpecification.PARSER_SIDE_VALIDATION
+import amf.core.validation.model.PropertyPath
 import amf.core.vocabulary.Namespace
 import org.yaml.model.YDocument.EntryBuilder
 
@@ -36,6 +37,8 @@ case class NodeConstraint(constraint: String, value: String)
 
 case class PropertyConstraint(ramlPropertyId: String,
                               name: String,
+                              // storing the constraint over a property path
+                              path: Option[PropertyPath] = None,
                               // shacl:message
                               message: Option[String] = None,
                               pattern: Option[String] = None,
@@ -64,7 +67,24 @@ case class PropertyConstraint(ramlPropertyId: String,
                               `class`: Seq[String] = Seq(),
                               in: Seq[String] = Seq.empty,
                               custom: Option[(EntryBuilder, String) => Unit] = None,
-                              customRdf: Option[(RdfModel, String) => Any] = None)
+                              customRdf: Option[(RdfModel, String) => Any] = None,
+                              /**
+                               * for qualified constraints
+                               */
+                              atLeast: Option[(Int, String)] = None,
+                              atMost: Option[(Int, String)] = None,
+                              value: Option[String] = None,
+                              // Property comparisons
+                              equalToProperty: Option[String] = None,
+                              disjointWithProperty: Option[String] = None,
+                              lessThanProperty: Option[String] = None,
+                              lessThanOrEqualsToProperty: Option[String] = None,
+                             )
+
+case class QueryConstraint(
+                            prefixes: Map[String,String],
+                            query: String
+                          )
 
 case class ValidationSpecification(name: String,
                                    // shacl:message
@@ -107,7 +127,20 @@ case class ValidationSpecification(name: String,
                                    nodeConstraints: Seq[NodeConstraint] = Seq.empty,
                                    closed: Option[Boolean] = None,
                                    functionConstraint: Option[FunctionConstraint] = None,
-                                   custom: Option[(EntryBuilder, String) => Unit] = None) {
+                                   custom: Option[(EntryBuilder, String) => Unit] = None,
+                                  /*
+                                   * Nested validations
+                                   */
+                                   nested: Option[String] = None,
+                                  /*
+                                   * transition from JS functions to complex ones
+                                   */
+                                   replacesFunctionConstraint: Option[String] = None,
+                                  /*
+                                   * Query validation
+                                   */
+                                   query: Option[QueryConstraint] = None
+                                  ) {
 
   val id: String = {
     if (name.startsWith("http://") || name.startsWith("https://") || name.startsWith("file:")) {
