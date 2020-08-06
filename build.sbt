@@ -61,11 +61,6 @@ lazy val workspaceDirectory: File =
 
 val syamlVersion = "0.7.280"
 
-lazy val syamlJVMRef = ProjectRef(workspaceDirectory / "syaml", "syamlJVM")
-lazy val syamlJSRef = ProjectRef(workspaceDirectory / "syaml", "syamlJS")
-lazy val syamlLibJVM = "org.mule.syaml" %% "syaml" % syamlVersion
-lazy val syamlLibJS = "org.mule.syaml" %% "syaml_sjs0.6" % syamlVersion
-
 lazy val defaultProfilesGenerationTask = TaskKey[Unit](
   "defaultValidationProfilesGeneration",
   "Generates the validation dialect documents for the standard profiles")
@@ -80,14 +75,16 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .jvmSettings(
     libraryDependencies += "org.scala-js" %% "scalajs-stubs" % scalaJSVersion % "provided",
     libraryDependencies += "org.scala-lang.modules" % "scala-java8-compat_2.12" % "0.8.0",
+    libraryDependencies += "org.mule.syaml" %% "syaml" % syamlVersion,
     artifactPath in(Compile, packageDoc) := baseDirectory.value / "target" / "artifact" / "amf-core-javadoc.jar"
   )
   .jsSettings(
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.7",
+    libraryDependencies += "org.mule.syaml" %% "syaml_sjs0.6" % syamlVersion,
     scalaJSModuleKind := ModuleKind.CommonJSModule,
     artifactPath in(Compile, fullOptJS) := baseDirectory.value / "target" / "artifact" / "amf-core-module.js",
     scalacOptions += "-P:scalajs:suppressExportDeprecations"
   ).disablePlugins(SonarPlugin)
 
-lazy val coreJVM = core.jvm.in(file("./jvm")).sourceDependency(syamlJVMRef, syamlLibJVM)
-lazy val coreJS = core.js.in(file("./js")).sourceDependency(syamlJSRef, syamlLibJS).disablePlugins(SonarPlugin)
+lazy val coreJVM = core.jvm.in(file("./jvm"))
+lazy val coreJS = core.js.in(file("./js")).disablePlugins(SonarPlugin)
