@@ -2,6 +2,10 @@ package amf.core.annotations
 
 import amf.core.model.domain._
 
+/**
+  * TrackedElement is used to register the original location of an example (parameter, payload, etc).
+  * This information has to be saved as it is lost when examples are propagated to their corresponding shapes.
+  */
 case class TrackedElement(parents: Set[String]) extends EternalSerializedAnnotation with UriAnnotation {
 
   /** Extension name. */

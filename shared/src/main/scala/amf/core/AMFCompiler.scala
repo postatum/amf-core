@@ -197,40 +197,20 @@ class AMFCompiler(compilerContext: CompilerContext,
     }
 
     val parsed: Option[(String, ParsedDocument)] = mediaType
-      .flatMap { mime =>
-        AMFPluginsRegistry
-          .syntaxPluginForMediaType(mime)
-          .flatMap(_.parse(mime, content.stream, compilerContext.parserContext, parsingOptions))
-          .map((mime, _))
-      }
+      .flatMap(mime => parseSyntaxForMediaType(content, mime))
       .orElse {
         mediaType match {
           case None =>
             content.mime
-              .flatMap { mime =>
-                AMFPluginsRegistry
-                  .syntaxPluginForMediaType(mime)
-                  .flatMap(_.parse(mime, content.stream, compilerContext.parserContext, parsingOptions))
-                  .map((mime, _))
-              }
+              .flatMap(mime => parseSyntaxForMediaType(content, mime))
               .orElse {
                 FileMediaType
                   .extension(content.url)
                   .flatMap(FileMediaType.mimeFromExtension)
-                  .flatMap { infered =>
-                    AMFPluginsRegistry
-                      .syntaxPluginForMediaType(infered)
-                      .flatMap(_.parse(infered, content.stream, compilerContext.parserContext, parsingOptions))
-                      .map((infered, _))
-                  }
+                  .flatMap(inferred => parseSyntaxForMediaType(content, inferred))
               }
               .orElse {
-                autodetectSyntax(content.stream).flatMap { infered =>
-                  AMFPluginsRegistry
-                    .syntaxPluginForMediaType(infered)
-                    .flatMap(_.parse(infered, content.stream, compilerContext.parserContext, parsingOptions))
-                    .map((infered, _))
-                }
+                autodetectSyntax(content.stream).flatMap(inferred => parseSyntaxForMediaType(content, inferred))
               }
           case _ => None
         }
@@ -246,6 +226,13 @@ class AMFCompiler(compilerContext: CompilerContext,
       case None =>
         Left(content)
     }
+  }
+
+  private def parseSyntaxForMediaType(content: Content, mime: String) = {
+    AMFPluginsRegistry
+      .syntaxPluginForMediaType(mime)
+      .flatMap(_.parse(mime, content.stream, compilerContext.parserContext, parsingOptions))
+      .map((mime, _))
   }
 
   def parseExternalFragment(content: Content)(implicit executionContext: ExecutionContext): Future[BaseUnit] = Future {
@@ -276,10 +263,7 @@ class AMFCompiler(compilerContext: CompilerContext,
   private def parseDomain(document: Root)(implicit executionContext: ExecutionContext): Future[BaseUnit] = {
     compilerContext.logForFile("AMFCompiler#parseDomain: parsing domain")
 
-    val domainPluginOption =
-      vendor.fold(AMFPluginsRegistry.documentPluginForMediaType(document.mediatype).find(_.canParse(document)))({
-        AMFPluginsRegistry.documentPluginForVendor(_).find(_.canParse(document))
-      })
+    val domainPluginOption = getDomainPluginFor(document)
 
     val futureDocument: Future[BaseUnit] = domainPluginOption match {
       case Some(domainPlugin) =>
@@ -294,26 +278,15 @@ class AMFCompiler(compilerContext: CompilerContext,
                 .withRaw(document.raw)
                 .tagReferences(documentWithReferences)
 
-            case None =>
-              ExternalFragment()
-                .withId(document.location)
-                .withLocation(document.location)
-                .withEncodes(
-                  ExternalDomainElement()
-                    .withRaw(document.raw)
-                    .withMediaType(document.mediatype))
+            case None => buildExternalFragment(document)
           }
         }
       case None if vendor.isDefined => throw new UnsupportedVendorException(vendor.get)
       case None =>
         Future {
           compilerContext.logForFile("AMFCompiler#parseSyntax: parsing domain NO PLUGIN")
-          ExternalFragment()
-            .withLocation(document.location)
-            .withId(document.location)
-            .withEncodes(ExternalDomainElement().withRaw(document.raw).withMediaType(document.mediatype))
+          buildExternalFragment(document)
         }
-
     }
 
     futureDocument map { baseUnit: BaseUnit =>
@@ -326,6 +299,22 @@ class AMFCompiler(compilerContext: CompilerContext,
       }
       baseUnit
     }
+  }
+
+  private def buildExternalFragment(document: Root) = {
+    ExternalFragment()
+      .withId(document.location)
+      .withLocation(document.location)
+      .withEncodes(
+        ExternalDomainElement()
+          .withRaw(document.raw)
+          .withMediaType(document.mediatype))
+  }
+
+  private def getDomainPluginFor(document: Root) = {
+    vendor.fold(AMFPluginsRegistry.documentPluginForMediaType(document.mediatype).find(_.canParse(document)))({
+      AMFPluginsRegistry.documentPluginForVendor(_).find(_.canParse(document))
+    })
   }
 
   private def parseReferences(root: Root, domainPlugin: AMFDocumentPlugin)(
@@ -402,14 +391,17 @@ class AMFCompiler(compilerContext: CompilerContext,
 object AMFCompiler {
   def init()(implicit executionContext: ExecutionContext) {
     // We register ourselves as the Runtime compiler
-    RuntimeCompiler.register(
-      (compilerContext: CompilerContext,
-       mediaType: Option[String],
-       vendor: Option[String],
-       referenceKind: ReferenceKind,
-       parsingOptions: ParsingOptions) => {
-        new AMFCompiler(compilerContext, mediaType, vendor, referenceKind, parsingOptions).build()
-      })
+    RuntimeCompiler.register(new AMFCompilerAdapter())
+  }
+}
+
+class AMFCompilerAdapter(implicit executionContext: ExecutionContext) extends RuntimeCompiler {
+  override def build(compilerContext: CompilerContext,
+                     mediaType: Option[String],
+                     vendor: Option[String],
+                     referenceKind: ReferenceKind,
+                     parsingOptions: ParsingOptions): Future[BaseUnit] = {
+    new AMFCompiler(compilerContext, mediaType, vendor, referenceKind, parsingOptions).build()
   }
 }
 

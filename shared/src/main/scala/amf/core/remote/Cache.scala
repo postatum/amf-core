@@ -19,17 +19,15 @@ class Cache {
     dependencyGraph.update(to, fromNodes.+(from))
   }
 
-  protected def findCycles(node: String, acc: List[String] = List()): Option[List[String]] = {
-    val fullPath: List[String] = acc ++ List(node)
-    if (fullPath.size != fullPath.toSet.size) {
-      Some(fullPath)
+  protected def findCycles(node: String, acc: Set[String] = Set()): Boolean = {
+    if (acc.contains(node)) {
+      true
     }
     else {
       val sources = dependencyGraph.getOrElse(node, Set())
-      val maybeCycles: Set[Option[List[String]]] = sources.map { source =>
-        findCycles(source, fullPath)
+      sources.exists { source =>
+        findCycles(source, acc + node)
       }
-      maybeCycles.find(_.isDefined).flatten
     }
   }
 
@@ -48,19 +46,19 @@ class Cache {
     beforeLast(context.history) foreach { from =>
       addFromToEdge(from, url)
     }
-    findCycles(url) match {
-      case Some(_) =>
-        if (cache(url).isCompleted) {
-          cache(url)
+    if (findCycles(url)) {
+      if (cache(url).isCompleted) {
+        cache(url)
+      }
+      else {
+        cache.remove(url)
+        supplier() map { res =>
+          update(url, Future(res))
+          res
         }
-        else {
-          cache.remove(url)
-          supplier() map { res =>
-            update(url, Future(res))
-            res
-          }
-        }
-      case _ =>
+      }
+    }
+    else {
         cache.get(url) match {
           case Some(value) =>
             value
