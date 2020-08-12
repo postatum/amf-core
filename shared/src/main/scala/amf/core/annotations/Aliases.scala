@@ -24,23 +24,25 @@ case class Aliases(aliases: Set[(Aliases.Alias, (Aliases.FullUrl, Aliases.Relati
 
 object Aliases extends AnnotationGraphLoader {
 
-  type FullUrl     = String
-  type RelativeUrl = String
-  type Alias       = String
+  type FullUrl        = String
+  type RelativeUrl    = String
+  type Alias          = String
+  type RefId          = String
+  type ImportLocation = String
 
   override def unparse(annotatedValue: String, objects: Map[String, AmfElement]): Option[Annotation] =
     Some(
-      Aliases(
-        annotatedValue
-          .split(",")
-          .map(_.split("->") match {
-            case Array(alias, urls) =>
-              urls.split("::") match {
-                case Array(fullUrl, relativeUrl) =>
-                  alias -> (fullUrl, relativeUrl)
-              }
-          })
-          .toSet))
+        Aliases(
+            annotatedValue
+              .split(",")
+              .map(_.split("->") match {
+                case Array(alias, urls) =>
+                  urls.split("::") match {
+                    case Array(fullUrl, relativeUrl) =>
+                      alias -> (fullUrl, relativeUrl)
+                  }
+              })
+              .toSet))
 }
 
 object AliasDeclaration {
