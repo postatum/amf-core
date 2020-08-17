@@ -23,6 +23,9 @@ trait ErrorHandler {
                        level: String,
                        location: Option[String]): Unit
 
+  def reportConstraint(specification: ValidationSpecification, node: String, message: String, ast: YPart, level: String): Unit =
+    reportConstraint(specification.id, node, None, message, lexical(ast.location), level, ast.sourceName.option)
+
   /** Report constraint failure of severity violation. */
   def violation(specification: ValidationSpecification,
                 node: String,

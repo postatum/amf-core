@@ -14,6 +14,10 @@ import scala.util.matching.Regex
 
 package object utils {
 
+  object Regexes {
+    lazy val Path: Regex = "(.*)/(.*)".r // Path(parent,child)
+  }
+
   implicit class MediaTypeMatcher(val content: String) extends AnyVal {
 
     def guessMediaType(isScalar: Boolean): String = { // move to objects
@@ -87,7 +91,8 @@ package object utils {
       val words = str.split("\\s+")
       if (words.size == 1) {
         words.head
-      } else {
+      }
+      else {
         (Seq(words.head) ++ words.tail.map(_.capitalize)).mkString
       }
     }
@@ -106,7 +111,8 @@ package object utils {
           case -1  => QName("", fqn)
           case dot => QName(fqn.substring(0, dot), fqn.substring(dot + 1))
         }
-      } else Empty
+      }
+      else Empty
     }
 
     val Empty = QName("", "")
