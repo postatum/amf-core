@@ -30,13 +30,15 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
     case None              => platform.defaultExecutionEnvironment.executionContext
   }
 
+  protected def defaultShapeRenderOptions(): ShapeRenderOptions = ShapeRenderOptions()
+
   /**
     * Asynchronously renders the syntax text and stores it in the file pointed by the provided URL.
     * It must throw an UnsupportedOperation exception in platforms without support to write to the file system
     * (like the browser) or if a remote URL is provided.
     */
   def generateFile(unit: BaseUnit, output: File): ClientFuture[Unit] = {
-    generateFile(unit, output, RenderOptions(), ShapeRenderOptions())
+    generateFile(unit, output, RenderOptions(), defaultShapeRenderOptions())
   }
 
   /**
@@ -45,7 +47,7 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
     * (like the browser) or if a remote URL is provided.
     */
   def generateFile(unit: BaseUnit, output: File, options: RenderOptions): ClientFuture[Unit] = {
-    generateFile(unit, "file://" + output.getAbsolutePath, options, ShapeRenderOptions())
+    generateFile(unit, "file://" + output.getAbsolutePath, options, defaultShapeRenderOptions())
   }
 
   /**
@@ -73,7 +75,7 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
     */
   @JSExport
   def generateFile(unit: BaseUnit, url: String): ClientFuture[Unit] = {
-    generateFile(unit, url, RenderOptions(), ShapeRenderOptions())
+    generateFile(unit, url, RenderOptions(), defaultShapeRenderOptions())
   }
 
   /**
@@ -88,13 +90,13 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
   /** Asynchronously renders the syntax text and returns it. */
   @JSExport
   def generateString(unit: BaseUnit): ClientFuture[String] = {
-    generateString(unit, RenderOptions(), ShapeRenderOptions())
+    generateString(unit, RenderOptions(), defaultShapeRenderOptions())
   }
 
   /** Asynchronously renders the syntax text and returns it. */
   @JSExport
   def generateString(unit: BaseUnit, options: RenderOptions): ClientFuture[String] = {
-    generateString(unit, options, ShapeRenderOptions())
+    generateString(unit, options, defaultShapeRenderOptions())
   }
 
   /** Asynchronously renders the syntax text and returns it. */
@@ -111,7 +113,7 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
   /** Asynchronously renders the syntax to a provided writer and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, options: RenderOptions, writer: Writer): ClientFuture[Unit] =
-    generateToWriter(unit, options, ShapeRenderOptions(), writer)
+    generateToWriter(unit, options, defaultShapeRenderOptions(), writer)
 
   /** Asynchronously renders the syntax to a provided writer and returns it. */
   @JSExport
@@ -126,12 +128,12 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
   /** Asynchronously renders the syntax to a provided writer and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, writer: Writer): ClientFuture[Unit] =
-    generateToWriter(unit, RenderOptions(), ShapeRenderOptions(), writer)
+    generateToWriter(unit, RenderOptions(), defaultShapeRenderOptions(), writer)
 
   /** Asynchronously renders the syntax to a provided string buffer with limited capacity and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, options: RenderOptions, writer: LimitedStringBuffer): ClientFuture[Unit] =
-    generateToWriter(unit, options, ShapeRenderOptions(), writer)
+    generateToWriter(unit, options, defaultShapeRenderOptions(), writer)
 
   /** Asynchronously renders the syntax to a provided string buffer with limited capacity and returns it. */
   @JSExport
@@ -146,15 +148,15 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
   /** Asynchronously renders the syntax to a provided string buffer with limited capacity and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, writer: LimitedStringBuffer): ClientFuture[Unit] =
-    generateToWriter(unit, RenderOptions(), ShapeRenderOptions(), writer)
+    generateToWriter(unit, RenderOptions(), defaultShapeRenderOptions(), writer)
 
   /** Asynchronously renders the syntax to a provided builder and returns it. */
   protected def genToBuilder[T](unit: BaseUnit, builder: DocBuilder[T]): ClientFuture[Unit] =
-    genToBuilder(unit, RenderOptions(), ShapeRenderOptions(), builder)
+    genToBuilder(unit, RenderOptions(), defaultShapeRenderOptions(), builder)
 
   /** Asynchronously renders the syntax to a provided builder and returns it. */
   protected def genToBuilder[T](unit: BaseUnit, options: RenderOptions, builder: DocBuilder[T]): ClientFuture[Unit] =
-    genToBuilder(unit, options, ShapeRenderOptions(), builder)
+    genToBuilder(unit, options, defaultShapeRenderOptions(), builder)
 
   /** Asynchronously renders the syntax to a provided builder and returns it. */
   protected def genToBuilder[T](unit: BaseUnit, shapeOptions: ShapeRenderOptions, builder: DocBuilder[T]): ClientFuture[Unit] =
