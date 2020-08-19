@@ -195,6 +195,6 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
                           options: InternalRenderOptions,
                           shapeOptions: InternalShapeRenderOptions,
                           builder: DocBuilder[T]): Future[Unit] = {
-    new AMFSerializer(unit, mediaType, vendor, options).renderToBuilder(builder)
+    new AMFSerializer(unit, mediaType, vendor, options, shapeOptions).renderToBuilder(builder)
   }
 }
