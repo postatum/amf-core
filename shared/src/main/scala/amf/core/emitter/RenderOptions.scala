@@ -17,6 +17,7 @@ import amf.plugins.document.graph.parser.{
   */
 class RenderOptions {
 
+  private var compactedEmission: Boolean     = true
   private var sources: Boolean               = false
   private var compactUris: Boolean           = false
   private var rawSourceMaps: Boolean         = false
@@ -28,6 +29,17 @@ class RenderOptions {
   private var eh: ErrorHandler               = UnhandledErrorHandler
   private var prettyPrint                    = false
   private var emitNodeIds                    = false
+
+  def withCompactedEmission: RenderOptions = {
+    compactedEmission = true
+    this
+  }
+
+  def withoutCompactedEmission: RenderOptions = {
+    compactedEmission = false
+    this
+  }
+
 
   def withPrettyPrint: RenderOptions = {
     prettyPrint = true
@@ -122,6 +134,7 @@ class RenderOptions {
 
   def isFlattenedJsonLd: Boolean = flattenedJsonLd
 
+  def isWithCompactedEmission: Boolean   = compactedEmission
   def isCompactUris: Boolean             = compactUris
   def isWithSourceMaps: Boolean          = sources
   def isWithRawSourceMaps: Boolean       = rawSourceMaps
@@ -150,6 +163,7 @@ object RenderOptions {
 
   def apply(client: ClientRenderOptions): RenderOptions = {
     val opts = new RenderOptions()
+    opts.compactedEmission = client.isWithCompactedEmission
     opts.sources = client.isWithSourceMaps
     opts.amfJsonLdSerialization = client.isAmfJsonLdSerilization
     opts.compactUris = client.isWithCompactUris

@@ -13,13 +13,26 @@ import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
 @JSExportTopLevel("render.RenderOptions")
 class RenderOptions {
 
-  private var sources: Boolean       = false
-  private var compactUris: Boolean   = false
-  private var amfJsonLdSerialization = true
-  private var prettyPrint            = false
-  private var flattenedJsonLd        = false
-  private var eh: ClientErrorHandler = ErrorHandlerConverter.asClient(UnhandledErrorHandler)
-  private var emitNodeIds            = false
+  private var compactedEmission: Boolean     = true
+  private var sources: Boolean               = false
+  private var compactUris: Boolean           = false
+  private var amfJsonLdSerialization         = true
+  private var prettyPrint                    = false
+  private var flattenedJsonLd                = false
+  private var eh: ClientErrorHandler         = ErrorHandlerConverter.asClient(UnhandledErrorHandler)
+  private var emitNodeIds                    = false
+
+  /** Emit compacted graph. */
+  def withCompactedEmission: RenderOptions = {
+    compactedEmission = true
+    this
+  }
+
+  /** Emit not compacted graph. */
+  def withoutCompactedEmission: RenderOptions = {
+    compactedEmission = false
+    this
+  }
 
   /** Pretty print the graph. */
   def withPrettyPrint: RenderOptions = {
@@ -97,6 +110,7 @@ class RenderOptions {
     this
   }
 
+  def isWithCompactedEmission: Boolean = compactedEmission
   def isWithCompactUris: Boolean       = compactUris
   def isWithSourceMaps: Boolean        = sources
   def isAmfJsonLdSerilization: Boolean = amfJsonLdSerialization
