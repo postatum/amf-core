@@ -31,11 +31,7 @@ pipeline {
     }
     stage('Publish') {
       when {
-        anyOf{
-
-          branch 'master'
-          branch 'syaml-recovery-internal-snapshot'
-        }
+        branch 'master'
       }
       steps {
         wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
