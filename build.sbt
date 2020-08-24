@@ -1,4 +1,5 @@
 import org.scalajs.core.tools.linker.ModuleKind
+import org.scalajs.core.tools.linker.ModuleKind
 import sbt.Keys.{libraryDependencies, resolvers}
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 import sbtsonar.SonarPlugin.autoImport.sonarProperties
@@ -59,7 +60,7 @@ lazy val workspaceDirectory: File =
     case _ => Path.userHome / "mulesoft"
   }
 
-val syamlVersion = "1.0.281"
+val syamlVersion = "1.0.282"
 
 lazy val syamlJVMRef = ProjectRef(workspaceDirectory / "syaml", "syamlJVM")
 lazy val syamlJSRef = ProjectRef(workspaceDirectory / "syaml", "syamlJS")
