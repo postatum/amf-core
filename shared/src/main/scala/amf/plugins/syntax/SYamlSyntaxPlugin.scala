@@ -2,7 +2,7 @@ package amf.plugins.syntax
 
 import amf.client.plugins.{AMFPlugin, AMFSyntaxPlugin}
 import amf.core.client.ParsingOptions
-import amf.core.parser.{ParsedDocument, ParserContext, SyamlParsedDocument}
+import amf.core.parser.{JsonParserFactory, ParsedDocument, ParserContext, SyamlParsedDocument}
 import amf.core.rdf.RdfModelDocument
 import amf.core.unsafe.PlatformSecrets
 import org.mulesoft.common.io.Output
@@ -40,7 +40,7 @@ object SYamlSyntaxPlugin extends AMFSyntaxPlugin with PlatformSecrets {
       platform.rdfFramework.get.syntaxToRdfModel(mediaType, text)
     } else {
       val parser = getFormat(mediaType) match {
-        case "json" => JsonParser.withSource(text, ctx.rootContextDocument)(ctx.eh)
+        case "json" => JsonParserFactory.fromCharsWithSource(text, ctx.rootContextDocument)(ctx.eh)
         case _      => YamlParser(text, ctx.rootContextDocument)(ctx.eh).withIncludeTag("!include")
       }
       val (document, comment) = parser.document() match {
