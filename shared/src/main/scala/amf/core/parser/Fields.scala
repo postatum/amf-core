@@ -180,7 +180,7 @@ class Fields {
     this
   }
 
-  private def adopt(id: String, value: AmfElement): Unit = value match {
+  def adopt(id: String, value: AmfElement): Unit = value match {
     case obj: AmfObject => obj.adopted(id)
     case seq: AmfArray  => seq.values.foreach(adopt(id, _))
     case _              => // Do nothing with scalars
@@ -234,7 +234,7 @@ class Fields {
 
   private[amf] def cloneFields(branch: mutable.Map[AmfObject, AmfObject]): Fields = {
     val cloned = new Fields()
-    fs.foreach{ case (field, value) =>  cloned.fs += (field -> value.cloneValue(branch)) }
+    fs.foreach { case (field, value) => cloned.fs += (field -> value.cloneValue(branch)) }
     cloned
   }
 }
@@ -308,7 +308,7 @@ class Value(var value: AmfElement, val annotations: Annotations) {
 
   def cloneAnnotated(annotation: Annotation) = Value(value, Annotations(annotations))
 
-  def cloneValue(branch:mutable.Map[AmfObject, AmfObject]) = Value(value.cloneElement(branch), annotations.copy())
+  def cloneValue(branch: mutable.Map[AmfObject, AmfObject]) = Value(value.cloneElement(branch), annotations.copy())
 }
 
 object Value {

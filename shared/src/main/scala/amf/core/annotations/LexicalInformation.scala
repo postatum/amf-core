@@ -1,7 +1,7 @@
 package amf.core.annotations
 
 import amf.core.model.domain._
-import amf.core.parser.Range
+import amf.core.parser.{Position, Range}
 
 case class LexicalInformation(range: Range) extends SerializableAnnotation with PerpetualAnnotation {
   override val name: String = "lexical"
@@ -14,6 +14,8 @@ object LexicalInformation extends AnnotationGraphLoader {
     Some(LexicalInformation.apply(annotatedValue))
 
   def apply(range: String): LexicalInformation = new LexicalInformation(Range.apply(range))
+  def apply(lineFrom: Int, columnFrom: Int, lineTo: Int, columnTo: Int) = new LexicalInformation(Range((lineFrom, columnFrom), (lineTo, columnTo)))
+  def apply(startPosition: Position, endPosition: Position) = new LexicalInformation(Range(startPosition, endPosition))
 }
 
 class HostLexicalInformation(override val range: Range) extends LexicalInformation(range) {

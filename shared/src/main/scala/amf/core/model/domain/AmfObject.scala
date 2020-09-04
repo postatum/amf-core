@@ -1,9 +1,6 @@
 package amf.core.model.domain
 
-import java.util
-import amf.core.annotations.ErrorDeclaration
 import amf.core.metamodel.{Field, ModelDefaultBuilder, Obj}
-import amf.core.model.document.RecursiveUnit
 import amf.core.parser.{Annotations, Fields}
 
 import scala.collection.mutable
@@ -103,6 +100,11 @@ trait AmfObject extends AmfElement {
   /** Set field value. */
   def set(field: Field, value: AmfElement, annotations: Annotations): this.type = {
     fields.set(id, field, value, annotations)
+    this
+  }
+
+  def setWithoutId(field: Field, value: AmfElement, annotations: Annotations = Annotations()): this.type = {
+    fields.setWithoutId(field, value, annotations)
     this
   }
 
