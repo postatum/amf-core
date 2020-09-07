@@ -1,5 +1,7 @@
 package amf.core.validation
 
+import java.util.Objects
+
 import amf.core.annotations.{LexicalInformation, SourceLocation}
 import amf.core.model.document.BaseUnit
 import amf.core.model.domain.{AmfArray, DomainElement}
@@ -29,21 +31,27 @@ case class AMFValidationResult(message: String,
 
   override def equals(obj: Any): Boolean = obj match {
     case other:AMFValidationResult =>
-      other.message.equals(message) && other.validationId == validationId && other.location.getOrElse("") == location.getOrElse("") && samePosition(other.position)
+      other.message.equals(message) &&
+      other.validationId == validationId &&
+      other.location.getOrElse("") == location.getOrElse("") &&
+      samePosition(other.position)
     case _ => false
   }
 
-
-  override def hashCode(): Int = super.hashCode()
+  override def hashCode(): Int = {
+    Objects.hash(message, validationId, location.getOrElse(""), position.map(_.range.toString).getOrElse(""))
+  }
 
   private def samePosition(otherPosition:Option[LexicalInformation]): Boolean = {
     otherPosition match {
       case Some(otherPos) if position.isDefined =>
         val pos = position.get
         otherPos.range.toString.equals(pos.range.toString)
-      case _ => position.isEmpty
+      case None => position.isEmpty
+      case _ => false
     }
   }
+
   override def compare(that: AMFValidationResult): Int = {
 
     val thatPosition = if (that.position != null) that.position else None

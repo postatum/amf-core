@@ -1,14 +1,14 @@
 package amf.core.errorhandling
-import amf.core.validation.{AMFValidationReport, AMFValidationResult}
+import amf.core.validation.AMFValidationResult
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 
 trait ErrorCollector extends AmfResultErrorHandler {
-  private val errors: ListBuffer[AMFValidationResult] = ListBuffer()
+  private val errors: mutable.LinkedHashSet[AMFValidationResult] = mutable.LinkedHashSet()
 
   override def handlerAmfResult(result: AMFValidationResult): Boolean = synchronized {
-    if(!errors.exists(v => v.equals(result))) {
-      errors +=  result
+    if(!errors.contains(result)) {
+      errors += result
       true
     }else false
   }
