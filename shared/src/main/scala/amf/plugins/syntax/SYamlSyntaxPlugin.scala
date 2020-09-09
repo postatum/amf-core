@@ -43,7 +43,8 @@ object SYamlSyntaxPlugin extends AMFSyntaxPlugin with PlatformSecrets {
         case "json" => JsonParserFactory.fromCharsWithSource(text, ctx.rootContextDocument)(ctx.eh)
         case _      => YamlParser(text, ctx.rootContextDocument)(ctx.eh).withIncludeTag("!include")
       }
-      val (document, comment) = parser.document() match {
+      val document1 = parser.document()
+      val (document, comment) = document1 match {
         case d if d.isNull =>
           (YDocument(Array(YNode(YMap.empty)), ctx.rootContextDocument), d.children collectFirst { case c: YComment => c.metaText })
         case d =>

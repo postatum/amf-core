@@ -16,5 +16,5 @@ abstract class ParametrizedDeclaration(fields: Fields, annotations: Annotations)
 
   override def componentId: String = "/" + name.option().getOrElse("default-parametrized").urlComponentEncoded
 
-  override protected def nameField: Field = Name
+  override def nameField: Field = Name
 }
