@@ -9,7 +9,7 @@ import amf.core.model.domain.{AmfElement, Annotation}
 import amf.core.parser.{Annotations, _}
 import amf.core.vocabulary.Namespace
 import amf.core.vocabulary.Namespace.SourceMaps
-import amf.plugins.features.validation.CoreValidations.{MissingIdInNode, MissingTypeInNode}
+import amf.plugins.features.validation.CoreValidations.{MissingIdInNode, MissingTypeInNode, namespace}
 import org.yaml.convert.YRead.SeqNodeYRead
 import org.yaml.model._
 
@@ -53,10 +53,17 @@ trait GraphParserHelpers extends GraphContextHelper {
     result
   }
 
-  protected def ts(map: YMap, id: String)(implicit ctx: GraphParserContext): Seq[String] = {
-    val namespaces =
-      Seq("Document", "Fragment", "Module", "Unit").map(docElement => (Namespace.Document + docElement).iri())
+  // declared so they can be referenced from the retrieveType* functions
+  val amlDocNamespaces =
+    Seq("DialectInstance", "DialectInstanceFragment", "DialectInstanceLibrary", "DialectInstancePatch", "DialectLibrary", "DialectFragment","Dialect", "Vocabulary").map((docElement) => (Namespace.Meta + docElement))
 
+  val baseDocNamespaces =
+    Seq("Document", "Fragment", "Module", "Unit").map((docElement) => (Namespace.Document + docElement))
+
+  val allDocNamespaces = amlDocNamespaces ++ baseDocNamespaces
+
+  protected def ts(map: YMap, id: String)(implicit ctx: GraphParserContext): Seq[String] = {
+    val namespaces = baseDocNamespaces.map(docElement => docElement.iri())
     val documentTypesSet: Set[String] = (namespaces ++ namespaces.map(compactUriFromContext(_))).toSet
 
     map.key("@type") match {
