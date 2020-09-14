@@ -7,7 +7,7 @@ import amf.core.metamodel.domain.DomainElementModel
 import amf.core.model.document.SourceMap
 import amf.core.model.domain.{AmfElement, Annotation}
 import amf.core.parser.{Annotations, _}
-import amf.core.vocabulary.Namespace
+import amf.core.vocabulary.{Namespace, ValueType}
 import amf.core.vocabulary.Namespace.SourceMaps
 import amf.plugins.features.validation.CoreValidations.{MissingIdInNode, MissingTypeInNode, namespace}
 import org.yaml.convert.YRead.SeqNodeYRead
@@ -41,10 +41,10 @@ trait GraphParserHelpers extends GraphContextHelper {
             .as[Seq[YNode]]
             .foreach(e => {
               contentOfNode(e) foreach { element =>
-                val k       = element.key(compactUriFromContext(SourceMapModel.Element.value.iri())).get
-                val v       = element.key(compactUriFromContext(SourceMapModel.Value.value.iri())).get
+                val k = element.key(compactUriFromContext(SourceMapModel.Element.value.iri())).get
+                val v = element.key(compactUriFromContext(SourceMapModel.Value.value.iri())).get
                 consumer(value(SourceMapModel.Element.`type`, k.value).as[YScalar].text,
-                  value(SourceMapModel.Value.`type`, v.value).as[YScalar].text)
+                         value(SourceMapModel.Value.`type`, v.value).as[YScalar].text)
               }
             })
         case _ => // Unknown annotation identifier
@@ -53,18 +53,39 @@ trait GraphParserHelpers extends GraphContextHelper {
     result
   }
 
+  def asIris(ns: Namespace, elements: Seq[String]): Seq[ValueType] = elements.map(element => ns + element)
+
   // declared so they can be referenced from the retrieveType* functions
-  val amlDocNamespaces =
-    Seq("DialectInstance", "DialectInstanceFragment", "DialectInstanceLibrary", "DialectInstancePatch", "DialectLibrary", "DialectFragment","Dialect", "Vocabulary").map((docElement) => (Namespace.Meta + docElement))
+  val amlDocumentIris: Seq[ValueType] =
+    asIris(
+      Namespace.Meta,
+      Seq("DialectInstance",
+          "DialectInstanceFragment",
+          "DialectInstanceLibrary",
+          "DialectInstancePatch",
+          "DialectLibrary",
+          "DialectFragment",
+          "Dialect",
+          "Vocabulary")
+    )
 
-  val baseDocNamespaces =
-    Seq("Document", "Fragment", "Module", "Unit").map((docElement) => (Namespace.Document + docElement))
+  val coreDocumentIris: Seq[ValueType] =
+    asIris(Namespace.Document, Seq("Document", "Fragment", "Module", "Unit"))
 
-  val allDocNamespaces = amlDocNamespaces ++ baseDocNamespaces
+  val documentIris: Seq[ValueType] = amlDocumentIris ++ coreDocumentIris
 
+  /**
+    * Returns a list a sequence of type from a YMap defined in the @type entry
+    * @param map ymap input
+    * @param id some id to throw an error if type retrieval fails
+    * @param ctx graph parsing context
+    * @return
+    */
   protected def ts(map: YMap, id: String)(implicit ctx: GraphParserContext): Seq[String] = {
-    val namespaces = baseDocNamespaces.map(docElement => docElement.iri())
-    val documentTypesSet: Set[String] = (namespaces ++ namespaces.map(compactUriFromContext(_))).toSet
+    val documentExpandedIris: Seq[String] = coreDocumentIris.map(docElement => docElement.iri())
+    val documentCompactIris               = documentExpandedIris.map(compactUriFromContext(_))
+
+    val documentTypesSet: Set[String] = (documentExpandedIris ++ documentCompactIris).toSet
 
     map.key("@type") match {
       case Some(entry) =>
