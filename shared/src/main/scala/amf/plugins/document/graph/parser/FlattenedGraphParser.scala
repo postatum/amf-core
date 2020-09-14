@@ -112,9 +112,11 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
       val parsed = for {
         id           <- retrieveId(rootNode, ctx)
         encodesModel <- retrieveTypeIgnoring(id, rootNode, BaseUnitModel.`type` :+ (Namespace.Meta + "DialectInstance"))
-        unitModel    <- retrieveTypeIgnoring(id, rootNode, encodesModel.`type`)
-        encoded      <- parseRootNodeWithModel(rootNode, encodesModel)
-        baseUnit     <- parseRootNodeWithModel(rootNode, unitModel)
+        // we need to pass the doc namespaces so a change in the order of the declaration of a self-encoded domain-element
+        // does not take precedence over the AML document models
+        unitModel <- retrieveTypeFrom(id, rootNode, documentIris)
+        _         <- parseRootNodeWithModel(rootNode, encodesModel)
+        baseUnit  <- parseRootNodeWithModel(rootNode, unitModel)
       } yield {
         baseUnit
       }
@@ -124,7 +126,9 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
 
     private def parseBaseUnit(rootNode: YMap): Option[BaseUnit] = {
       val parsed = for {
-        id     <- retrieveId(rootNode, ctx)
+        id <- retrieveId(rootNode, ctx)
+        // we don't need to pass the doc namespace, since a potential AML doc will always have precedence
+        // over the regular basic document model due to the way we order potential models when checking types
         model  <- retrieveType(id, rootNode)
         parsed <- parseNode(rootNode, id, model)
       } yield {
@@ -159,9 +163,29 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
 
     private def retrieveType(id: String, map: YMap): Option[Obj] = retrieveTypeIgnoring(id, map, Nil)
 
+    private def retrieveTypeFrom(id: String, map: YMap, from: Seq[ValueType]): Option[Obj] = {
+      val expectedIris = from.map(_.iri())
+      this.retrieveTypeCondition(id, map, (t) => expectedIris.contains(t))
+    }
+
     private def retrieveTypeIgnoring(id: String, map: YMap, ignored: Seq[ValueType]): Option[Obj] = {
       val ignoredIris = ignored.map(_.iri())
-      val typeIris    = ts(map, id).diff(ignoredIris)
+      this.retrieveTypeCondition(id, map, (t) => !ignoredIris.contains(t))
+    }
+
+    /**
+      * Returns the first type defined in the @type entry from a YMap that matches the given predicate
+      * @param id id for error reporting
+      * @param map input ymap
+      * @param pred predicate
+      * @return Option for the first matching type as an Obj
+      */
+    private def retrieveTypeCondition(id: String, map: YMap, pred: (String) => Boolean): Option[Obj] = {
+      // this returns a certain order, we will return the first one that matches, but many could match
+      // first non-documents (including AML documents, dialect instances, dialects, vocabs, etc) are returned
+      // then the base document models are returned in sorted order: Document, Fragment, Module
+      val typeIris = ts(map, id).filter(pred) // we are filtering the list with the provided condition
+
       typeIris.find(findType(_).isDefined) match {
         case Some(t) => findType(t)
         case None =>
