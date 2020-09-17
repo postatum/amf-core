@@ -71,7 +71,7 @@ class TransformationTraversal(val transformation: TransformationData) {
       }
       .filter(_.isDefined)
       .map(_.get)
-    element.fields.setWithoutId(field, AmfArray(newElements), value.annotations)
+    element.fields.setWithoutId(field, AmfArray(newElements, value.value.annotations), value.annotations)
   }
 }
 
