@@ -428,7 +428,7 @@ class JsonLdEmitter[T](val builder: DocBuilder[T], val options: RenderOptions)(i
         case _ => // ignore
       }
     }
-    val linkLabel = shape.name.value()
+    val linkLabel = shape.name.option().getOrElse(ctx.nextTypeName)
     val linked = shape match {
       // if it is recursive we force the conversion into a linked shape
       case rec: RecursiveShape =>
