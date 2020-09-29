@@ -22,6 +22,8 @@ import scala.scalajs.js.annotation.JSExport
 class Renderer(val vendor: String, val mediaType: String, private val env: Option[Environment] = None)
     extends PlatformSecrets {
 
+  protected def defaultRenderOptions(): RenderOptions = RenderOptions()
+
   private implicit val executionContext: ExecutionContext = env match {
     case Some(environment) => environment.executionEnvironment.executionContext
     case None              => platform.defaultExecutionEnvironment.executionContext
@@ -32,7 +34,7 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
     * It must throw an UnsupportedOperation exception in platforms without support to write to the file system
     * (like the browser) or if a remote URL is provided.
     */
-  def generateFile(unit: BaseUnit, output: File): ClientFuture[Unit] = generateFile(unit, output, RenderOptions())
+  def generateFile(unit: BaseUnit, output: File): ClientFuture[Unit] = generateFile(unit, output, defaultRenderOptions)
 
   /**
     * Asynchronously renders the syntax text and stores it in the file pointed by the provided URL.
@@ -49,7 +51,7 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
     * (like the browser) or if a remote URL is provided.
     */
   @JSExport
-  def generateFile(unit: BaseUnit, url: String): ClientFuture[Unit] = generateFile(unit, url, RenderOptions())
+  def generateFile(unit: BaseUnit, url: String): ClientFuture[Unit] = generateFile(unit, url, defaultRenderOptions)
 
   /**
     * Asynchronously renders the syntax text and stores it in the file pointed by the provided URL.
@@ -62,7 +64,7 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
 
   /** Asynchronously renders the syntax text and returns it. */
   @JSExport
-  def generateString(unit: BaseUnit): ClientFuture[String] = generateString(unit, RenderOptions())
+  def generateString(unit: BaseUnit): ClientFuture[String] = generateString(unit, defaultRenderOptions)
 
   /** Asynchronously renders the syntax text and returns it. */
   @JSExport
@@ -77,7 +79,7 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
   /** Asynchronously renders the syntax to a provided writer and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, writer: Writer): ClientFuture[Unit] =
-    generateToWriter(unit, RenderOptions(), writer)
+    generateToWriter(unit, defaultRenderOptions, writer)
 
   /** Asynchronously renders the syntax to a provided string buffer with limited capacity and returns it. */
   @JSExport
@@ -87,11 +89,11 @@ class Renderer(val vendor: String, val mediaType: String, private val env: Optio
   /** Asynchronously renders the syntax to a provided string buffer with limited capacity and returns it. */
   @JSExport
   def generateToWriter(unit: BaseUnit, writer: LimitedStringBuffer): ClientFuture[Unit] =
-    generateToWriter(unit, RenderOptions(), writer)
+    generateToWriter(unit, defaultRenderOptions, writer)
 
   /** Asynchronously renders the syntax to a provided builder and returns it. */
   protected def genToBuilder[T](unit: BaseUnit, builder: DocBuilder[T]): ClientFuture[Unit] =
-    genToBuilder(unit, RenderOptions(), builder)
+    genToBuilder(unit, defaultRenderOptions, builder)
 
   /** Asynchronously renders the syntax to a provided builder and returns it. */
   protected def genToBuilder[T](unit: BaseUnit, options: RenderOptions, builder: DocBuilder[T]): ClientFuture[Unit] =
