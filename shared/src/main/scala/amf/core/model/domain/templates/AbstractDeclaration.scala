@@ -21,5 +21,5 @@ abstract class AbstractDeclaration(fields: Fields, annotations: Annotations)
   def withDescription(description: String): this.type  = set(Description, description)
 
   override def componentId: String        = "/" + name.option().getOrElse("default-abstract").urlComponentEncoded
-  override protected def nameField: Field = Name
+  override def nameField: Field = Name
 }

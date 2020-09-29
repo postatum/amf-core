@@ -9,7 +9,7 @@ import amf.core.model.document.BaseUnit
 import amf.core.model.domain.AnnotationGraphLoader
 import amf.core.parser.{ParserContext, ReferenceHandler}
 import amf.core.registries.AMFDomainEntityResolver
-import amf.core.remote.Platform
+import amf.core.remote.{Platform, Vendor}
 import amf.core.resolution.pipelines.ResolutionPipeline
 import org.yaml.builder.{DocBuilder, YDocumentBuilder}
 import org.yaml.model.YDocument
@@ -33,6 +33,8 @@ abstract class AMFDocumentPlugin extends AMFPlugin {
   val priority: Int = AMFDocumentPluginSettings.PluginPriorities.default
 
   val vendors: Seq[String]
+
+  val validVendorsToReference: Seq[Vendor] = Nil
 
   def modelEntities: Seq[Obj]
 

@@ -116,6 +116,11 @@ object CoreValidations extends Validations {
     "Default resolution validation"
   )
 
+  val UnhandledDomainElement = validation(
+    "unhandled-element",
+    "Unhandled domain element for given vendor"
+  )
+
   override val levels: Map[String, Map[ProfileName, String]] = Map(
     SyamlWarning.id -> all(WARNING),
     RecursiveShapeSpecification.id -> Map(
@@ -148,6 +153,7 @@ object CoreValidations extends Validations {
     InvalidCrossSpec,
     InvalidFragmentRef,
     RecursiveShapeSpecification,
-    ResolutionValidation
+    ResolutionValidation,
+    UnhandledDomainElement
   )
 }

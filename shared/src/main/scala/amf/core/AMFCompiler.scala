@@ -328,7 +328,7 @@ class AMFCompiler(compilerContext: CompilerContext,
         val nodes = link.refs.map(_.node)
         link.resolve(compilerContext, nodes, domainPlugin.allowRecursiveReferences) flatMap {
           case ReferenceResolutionResult(_, Some(unit)) =>
-            verifyMatchingVendor(unit.sourceVendor, domainPlugin.vendors.map(Vendor.apply), nodes)
+            verifyCrossReference(unit.sourceVendor, domainPlugin, nodes)
             verifyValidFragment(unit.sourceVendor, link.refs)
             val reference = ParsedReference(unit, link)
             handler.update(reference, compilerContext).map(Some(_))
@@ -352,12 +352,15 @@ class AMFCompiler(compilerContext: CompilerContext,
 
   private def resolve()(implicit executionContext: ExecutionContext): Future[Content] = compilerContext.resolveContent()
 
-  private def verifyMatchingVendor(refVendor: Option[Vendor], rootVendors: Seq[Vendor], nodes: Seq[YNode]): Unit =
+  private def verifyCrossReference(refVendor: Option[Vendor], domainPlugin: AMFDocumentPlugin, nodes: Seq[YNode]): Unit = {
+    val rootVendors = domainPlugin.vendors.map(Vendor.apply)
+    val validVendors = rootVendors ++ domainPlugin.validVendorsToReference
     refVendor match {
-      case Some(v) if !rootVendors.contains(v) && !isJsonRef(rootVendors) =>
+      case Some(v) if !validVendors.contains(v) && !isJsonRef(rootVendors) =>
         nodes.foreach(compilerContext.violation(InvalidCrossSpec, "Cannot reference fragments of another spec", _))
       case _ => // Nothing to do
     }
+  }
 
   private val JSON_REFS = "JSON + Refs"
 

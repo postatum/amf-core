@@ -25,7 +25,7 @@ import scala.collection.mutable
 trait BaseUnit extends AmfObject with MetaModelTypeMapping with PlatformSecrets {
 
   // Set the current model version
-  withModelVersion("2.1.0")
+  withModelVersion("2.1.2")
 
   // Set the default parsingRoot
   withRoot(false)

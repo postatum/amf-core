@@ -2,7 +2,7 @@ package amf.plugins.syntax
 
 import amf.client.plugins.{AMFPlugin, AMFSyntaxPlugin}
 import amf.core.client.ParsingOptions
-import amf.core.parser.{ParsedDocument, ParserContext, SyamlParsedDocument}
+import amf.core.parser.{JsonParserFactory, ParsedDocument, ParserContext, SyamlParsedDocument}
 import amf.core.rdf.RdfModelDocument
 import amf.core.unsafe.PlatformSecrets
 import org.mulesoft.common.io.Output
@@ -10,9 +10,7 @@ import org.yaml.model.{YComment, YDocument, YMap, YNode}
 import org.yaml.parser.{JsonParser, YamlParser}
 import org.yaml.render.{JsonRender, JsonRenderOptions, YamlRender}
 
-import scala.concurrent.ExecutionContext
-
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object SYamlSyntaxPlugin extends AMFSyntaxPlugin with PlatformSecrets {
 
@@ -42,16 +40,17 @@ object SYamlSyntaxPlugin extends AMFSyntaxPlugin with PlatformSecrets {
       platform.rdfFramework.get.syntaxToRdfModel(mediaType, text)
     } else {
       val parser = getFormat(mediaType) match {
-        case "json" => JsonParser.withSource(text, ctx.rootContextDocument)(ctx.eh)
+        case "json" => JsonParserFactory.fromCharsWithSource(text, ctx.rootContextDocument)(ctx.eh)
         case _      => YamlParser(text, ctx.rootContextDocument)(ctx.eh).withIncludeTag("!include")
       }
-      val parts   = parser.parse(keepTokens = false)
-      val comment = parts collectFirst { case c: YComment => c.metaText }
-      val doc = parts collectFirst { case d: YDocument => d } match {
-        case Some(d) => d
-        case None    => YDocument(Array(YNode(YMap.empty)), ctx.rootContextDocument)
+      val document1 = parser.document()
+      val (document, comment) = document1 match {
+        case d if d.isNull =>
+          (YDocument(Array(YNode(YMap.empty)), ctx.rootContextDocument), d.children collectFirst { case c: YComment => c.metaText })
+        case d =>
+          (d, d.children collectFirst { case c: YComment => c.metaText })
       }
-      Some(SyamlParsedDocument(doc, comment))
+      Some(SyamlParsedDocument(document, comment))
     }
   }
 

@@ -1,6 +1,6 @@
 package amf.core.parser
 
-import org.yaml.model.{YComment, YDocument}
+import org.yaml.model.YDocument
 
 abstract class ParsedDocument {
   def comment: Option[String] = None
