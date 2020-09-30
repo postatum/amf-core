@@ -326,10 +326,10 @@ class AMFCompiler(compilerContext: CompilerContext,
       .filter(_.isRemote)
       .map { link =>
         val nodes = link.refs.map(_.node)
-        link.resolve(compilerContext, nodes, domainPlugin.allowRecursiveReferences) flatMap {
+        link.resolve(compilerContext, nodes, domainPlugin.allowRecursiveReferences, domainPlugin) flatMap {
           case ReferenceResolutionResult(_, Some(unit)) =>
             verifyCrossReference(unit.sourceVendor, domainPlugin, nodes)
-            verifyValidFragment(unit.sourceVendor, link.refs)
+            domainPlugin.verifyValidFragment(unit.sourceVendor, link.refs, compilerContext)
             val reference = ParsedReference(unit, link)
             handler.update(reference, compilerContext).map(Some(_))
           case ReferenceResolutionResult(Some(e), _) =>
@@ -365,15 +365,6 @@ class AMFCompiler(compilerContext: CompilerContext,
   private val JSON_REFS = "JSON + Refs"
 
   private def isJsonRef(vendors: Seq[Vendor]) = vendors.forall(_.name.equals(JSON_REFS))
-
-  def verifyValidFragment(refVendor: Option[Vendor], refs: Seq[RefContainer]): Unit = refVendor match {
-    case Some(v) if v.isRaml =>
-      refs.foreach(
-        r =>
-          if (r.fragment.isDefined)
-            compilerContext.violation(InvalidFragmentRef, "Cannot use reference with # in a RAML fragment", r.node))
-    case _ => // Nothing to do
-  }
 
   def root()(implicit executionContext: ExecutionContext): Future[Root] = resolve().map(parseSyntax).flatMap {
     case Right(document: Root) =>

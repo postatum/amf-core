@@ -1,18 +1,18 @@
 package amf.client.plugins
 
-import amf.core.Root
+import amf.core.{CompilerContext, Root}
 import amf.core.client.ParsingOptions
 import amf.core.emitter.{RenderOptions, ShapeRenderOptions}
 import amf.core.errorhandling.ErrorHandler
 import amf.core.metamodel.Obj
 import amf.core.model.document.BaseUnit
 import amf.core.model.domain.AnnotationGraphLoader
-import amf.core.parser.{ParserContext, ReferenceHandler}
+import amf.core.parser.{ParserContext, RefContainer, ReferenceHandler, ReferenceKind}
 import amf.core.registries.AMFDomainEntityResolver
 import amf.core.remote.{Platform, Vendor}
 import amf.core.resolution.pipelines.ResolutionPipeline
 import org.yaml.builder.{DocBuilder, YDocumentBuilder}
-import org.yaml.model.YDocument
+import org.yaml.model.{YDocument, YNode}
 
 object AMFDocumentPluginSettings {
   object PluginPriorities {
@@ -41,6 +41,14 @@ abstract class AMFDocumentPlugin extends AMFPlugin {
   def modelEntitiesResolver: Option[AMFDomainEntityResolver] = None
 
   def serializableAnnotations(): Map[String, AnnotationGraphLoader]
+
+  def verifyValidFragment(refVendor: Option[Vendor], refs: Seq[RefContainer], ctx: CompilerContext): Unit = Unit
+
+  def verifyReferenceKind(unit: BaseUnit,
+                          definedKind: ReferenceKind,
+                          allKinds: Seq[ReferenceKind],
+                          nodes: Seq[YNode],
+                          ctx: ParserContext): Unit = Unit
 
   /**
     * Resolves the provided base unit model, according to the semantics of the domain of the document
