@@ -486,8 +486,8 @@ object ExpandedGraphParser {
         val acceptedTypes = types ++ types.map(Namespace.compact)
         acceptedKeys.exists(m.key(_).isDefined) ||
         m.key("@type").exists { typesEntry =>
-          val retrievedTypes = typesEntry.value.as[YSequence].nodes.map(node => node.as[YScalar].value)
-          (acceptedTypes intersect retrievedTypes).nonEmpty
+          val retrievedTypes = typesEntry.value.asOption[YSequence].map(_.nodes.map(node => node.as[YScalar].value))
+          retrievedTypes.exists(acceptedTypes.intersect(_).nonEmpty)
         }
       case _ => false
     }

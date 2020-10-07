@@ -7,7 +7,9 @@ import amf.client.model.domain.{ScalarNode => Scalar}
 import amf.client.parse.AmfGraphParser
 import amf.core.io.FileAssertionTest
 import amf.core.render.ElementsFixture
+import amf.plugins.document.graph.parser.ExpandedGraphParser
 import org.scalatest.{AsyncFunSuite, Matchers}
+import org.yaml.model.YDocument
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,6 +36,20 @@ trait ExpandedGraphParserTest
         val declared = doc.declares.asSeq.head
         declared.isInstanceOf[amf.client.model.domain.ArrayNode] shouldBe true
       }
+    }
+  }
+
+  test("Test that file with '@type' cannot be parsed by expanded parser") {
+    Core.init().asFuture.flatMap { _ =>
+      val doc = YDocument.parseJson(
+        """
+          |[{
+          |  "id": "id",
+          |  "@type": "some type"
+          |}]
+          |""".stripMargin)
+      val parsedDoc = SyamlParsedDocument(doc)
+      ExpandedGraphParser.canParse(parsedDoc) shouldBe false
     }
   }
 
