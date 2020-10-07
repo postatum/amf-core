@@ -18,19 +18,19 @@ trait ShapeModel extends DomainElementModel with LinkableElementModel with KeyFi
   val Name = Field(Str, Shacl + "name", ModelDoc(ExternalModelVocabularies.Shacl, "name", "Name for a data shape"))
 
   val DisplayName =
-    Field(Str, Core + "name", ModelDoc(ModelVocabularies.Core, "display name", "Human readable name for the term"))
+    Field(Str, Core + "name", ModelDoc(ModelVocabularies.Core, "displayName", "Human readable name for the term"))
 
   val Default = Field(
     DataNodeModel,
     Shacl + "defaultValue",
-    ModelDoc(ExternalModelVocabularies.Shacl, "default value", "Default value parsed for a data shape property"))
+    ModelDoc(ExternalModelVocabularies.Shacl, "defaultValue", "Default value parsed for a data shape property"))
 
   // TODO: change namespace
   val DefaultValueString = Field(
     Str,
     Shacl + "defaultValueStr",
     ModelDoc(ExternalModelVocabularies.Shacl,
-             "default value String",
+             "defaultValueString",
              "Textual representation of the parsed default value for the shape property")
   )
 
@@ -43,7 +43,7 @@ trait ShapeModel extends DomainElementModel with LinkableElementModel with KeyFi
     Array(Iri),
     Shapes + "closure",
     ModelDoc(ModelVocabularies.Shapes,
-             "inheritance closure",
+             "inheritanceClosure",
              "Transitive closure of data shapes this particular shape inherits structure from")
   )
 
@@ -69,7 +69,7 @@ trait ShapeModel extends DomainElementModel with LinkableElementModel with KeyFi
   val Xone = Field(
     Array(ShapeModel),
     Shacl + "xone",
-    ModelDoc(ExternalModelVocabularies.Shacl, "exclusive or", "Logical exclusive or composition of data shapes"))
+    ModelDoc(ExternalModelVocabularies.Shacl, "exclusiveOr", "Logical exclusive or composition of data shapes"))
 
   val Not = Field(ShapeModel,
                   Shacl + "not",
@@ -88,11 +88,11 @@ trait ShapeModel extends DomainElementModel with LinkableElementModel with KeyFi
                   ModelDoc(ExternalModelVocabularies.Shacl, "else", "Composition of data shape when if data shape is invalid"))
 
   val ReadOnly =
-    Field(Bool, Shapes + "readOnly", ModelDoc(ModelVocabularies.Shapes, "read only", "Read only property constraint"))
+    Field(Bool, Shapes + "readOnly", ModelDoc(ModelVocabularies.Shapes, "readOnly", "Read only property constraint"))
 
   val WriteOnly = Field(Bool,
     Shapes + "writeOnly",
-    ModelDoc(ModelVocabularies.Shapes, "write only", "Write only property constraint"))
+    ModelDoc(ModelVocabularies.Shapes, "writeOnly", "Write only property constraint"))
 
   val Deprecated = Field(
     Bool,
@@ -106,13 +106,13 @@ trait ShapeModel extends DomainElementModel with LinkableElementModel with KeyFi
     Array(PropertyShapeModel),
     Shapes + "customShapePropertyDefinitions",
     ModelDoc(ModelVocabularies.Shapes,
-             "custom shape property definitions",
+             "customShapePropertyDefinitions",
              "Custom constraint definitions added over a data shape")
   )
   lazy val CustomShapeProperties = Field(
     Array(ShapeExtensionModel),
     Shapes + "customShapeProperties",
-    ModelDoc(ModelVocabularies.Shapes, "custom shape properties", "Custom constraint values for a data shape")
+    ModelDoc(ModelVocabularies.Shapes, "customShapeProperties", "Custom constraint values for a data shape")
   )
   //
 

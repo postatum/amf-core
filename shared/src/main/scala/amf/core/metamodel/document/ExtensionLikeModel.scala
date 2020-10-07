@@ -29,7 +29,7 @@ object ExtensionLikeModel extends ExtensionLikeModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.AmlDoc,
-    "Document Extension",
+    "DocumentExtension",
     "A Document that extends a target document, overwriting part of the information or overlaying additional information."
   )
 }

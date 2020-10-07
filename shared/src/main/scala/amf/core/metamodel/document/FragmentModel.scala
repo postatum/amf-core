@@ -58,7 +58,7 @@ object PayloadFragmentModel extends FragmentModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.ApiContract,
-    "Payload Fragment",
+    "PayloadFragment",
     "Fragment encoding HTTP payload information"
   )
 }

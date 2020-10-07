@@ -23,7 +23,7 @@ trait DomainExtensionModel extends DomainElementModel with KeyField {
   val Name = Field(Str, Namespace.Core + "extensionName", ModelDoc(ModelVocabularies.Core, "name", "Name of an extension entity"))
   val DefinedBy = Field(CustomDomainPropertyModel,
                         Document + "definedBy",
-                        ModelDoc(ModelVocabularies.AmlDoc, "defined by", "Definition for the extended entity"))
+                        ModelDoc(ModelVocabularies.AmlDoc, "definedBy", "Definition for the extended entity"))
   val Extension = Field(DataNodeModel,
                         Document + "extension",
                         ModelDoc(ModelVocabularies.AmlDoc, "extension", "Data structure associated to the extension"))
@@ -42,7 +42,7 @@ object DomainExtensionModel extends DomainExtensionModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.ApiContract,
-    "Domain Extension",
+    "DomainExtension",
     "Extension to the model being parsed from RAML annotation or OpenAPI extensions\nThey must be a DomainPropertySchema (only in RAML) defining them.\nThe DomainPropertySchema might have an associated Data Shape that must validate the extension nested graph.\nThey are parsed as RDF graphs using a default transformation from a set of nested records into RDF."
   )
 }

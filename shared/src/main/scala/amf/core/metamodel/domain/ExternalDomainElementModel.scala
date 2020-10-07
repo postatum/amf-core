@@ -33,7 +33,7 @@ object ExternalDomainElementModel extends DomainElementModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.AmlDoc,
-    "External Domain Element",
+    "ExternalDomainElement",
     "Domain element containing foreign information that cannot be included into the model semantics"
   )
 }

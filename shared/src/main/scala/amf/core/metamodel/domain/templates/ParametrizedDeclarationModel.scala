@@ -34,7 +34,7 @@ object ParametrizedDeclarationModel extends ParametrizedDeclarationModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.AmlDoc,
-    "Parametrized Declaration",
+    "ParametrizedDeclaration",
     "Generic graph template supporting variables that can be transformed into a domain element"
   )
 }

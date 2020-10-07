@@ -12,7 +12,7 @@ trait AbstractDeclarationModel extends DomainElementModel with KeyField with Nam
   val DataNode = Field(
     DataNodeModel,
     Document + "dataNode",
-    ModelDoc(ModelVocabularies.AmlDoc, "data node", "Associated dynamic structure for the declaration"))
+    ModelDoc(ModelVocabularies.AmlDoc, "dataNode", "Associated dynamic structure for the declaration"))
 
   val Variables = Field(
     Array(Str),
@@ -35,7 +35,7 @@ object AbstractDeclarationModel extends AbstractDeclarationModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.AmlDoc,
-    "Abstract Declaration",
+    "AbstractDeclaration",
     "Graph template that can be used to declare a re-usable graph structure that can be applied to different domain elements\nin order to re-use common semantics. Similar to a Lisp macro or a C++ template.\nIt can be extended by any domain element adding bindings for the variables in the declaration."
   )
 }

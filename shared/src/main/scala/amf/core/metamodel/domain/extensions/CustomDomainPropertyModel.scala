@@ -56,7 +56,7 @@ object CustomDomainPropertyModel extends DomainElementModel with KeyField with D
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.AmlDoc,
-    "Custom Domain Property",
+    "CustomDomainProperty",
     "Definition of an extension to the domain model defined directly by a user in the RAML/OpenAPI document.\nThis can be achieved by using an annotationType in RAML. In OpenAPI thy don't need to\n      be declared, they can just be used.\n      This should be mapped to new RDF properties declared directly in the main document or module.\n      Contrast this extension mechanism with the creation of a propertyTerm in a vocabulary, a more\nre-usable and generic way of achieving the same functionality.\nIt can be validated using a SHACL shape"
   )
 }

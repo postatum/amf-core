@@ -39,7 +39,7 @@ trait BaseUnitModel extends Obj with ModelDefaultBuilder {
     Iri,
     ValueType(Namespace.Meta, "describedBy"),
     ModelDoc(ModelVocabularies.AmlDoc,
-             "described by",
+             "describedBy",
              "Link to the AML dialect describing a particular subgraph of information")
   )
 
@@ -59,7 +59,7 @@ object BaseUnitModel extends BaseUnitModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.AmlDoc,
-    "Base Unit",
+    "BaseUnit",
     "Base class for every single document model unit. After parsing a document the parser generate parsing Units. Units encode the domain elements and can reference other units to re-use descriptions."
   )
 }

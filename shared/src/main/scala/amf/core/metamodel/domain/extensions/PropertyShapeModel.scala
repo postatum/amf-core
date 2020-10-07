@@ -22,15 +22,15 @@ object PropertyShapeModel extends ShapeModel {
 
   val MinCount = Field(Int,
                        Shacl + "minCount",
-                       ModelDoc(ExternalModelVocabularies.Shacl, "min. count", "Minimum count property constraint"))
+                       ModelDoc(ExternalModelVocabularies.Shacl, "minCount", "Minimum count property constraint"))
 
   val MaxCount = Field(Int,
                        Shacl + "maxCount",
-                       ModelDoc(ExternalModelVocabularies.Shacl, "max. count", "Maximum count property constraint"))
+                       ModelDoc(ExternalModelVocabularies.Shacl, "maxCount", "Maximum count property constraint"))
 
   val PatternName = Field(Str,
                           Shapes + "patternName",
-                          ModelDoc(ModelVocabularies.Shapes, "pattern name", "Patterned property constraint"))
+                          ModelDoc(ModelVocabularies.Shapes, "patternName", "Patterned property constraint"))
 
   override val `type`: List[ValueType] = List(Shacl + "PropertyShape") ++ ShapeModel.`type`
 
@@ -41,7 +41,7 @@ object PropertyShapeModel extends ShapeModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.Shapes,
-    "Property Shape",
+    "PropertyShape",
     "Constraint over a property in a data shape."
   )
 }

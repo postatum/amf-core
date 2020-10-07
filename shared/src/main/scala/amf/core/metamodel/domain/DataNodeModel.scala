@@ -26,7 +26,7 @@ object DataNodeModel extends DomainElementModel with NameFieldSchema {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.Data,
-    "Data Node",
+    "DataNode",
     "Base class for all data nodes parsed from the data structure"
   )
 }
@@ -39,7 +39,7 @@ trait ObjectNodeModel extends DomainElementModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.Data,
-    "Object Node",
+    "ObjectNode",
     "Node that represents a dynamic object with records data structure"
   )
 }
@@ -60,7 +60,7 @@ object ScalarNodeModel extends DomainElementModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.Data,
-    "Scalar Node",
+    "ScalarNode",
     "Node that represents a dynamic scalar value data structure"
   )
 }
@@ -76,7 +76,7 @@ object ArrayNodeModel extends DomainElementModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.Data,
-    "Array Node",
+    "ArrayNode",
     "Node that represents a dynamic array data structure"
   )
 }
@@ -92,7 +92,7 @@ object LinkNodeModel extends DomainElementModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.Data,
-    "Link Node",
+    "LinkNode",
     "Node that represents a dynamic link in a data structure"
   )
 }
