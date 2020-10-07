@@ -14,7 +14,7 @@ trait ExternalSourceElementModel extends Obj {
   val ReferenceId = Field(
     Iri,
     Namespace.Document + "reference-id",
-    ModelDoc(ModelVocabularies.AmlDoc, "reference id", "Internal identifier for an inlined fragment"))
+    ModelDoc(ModelVocabularies.AmlDoc, "referenceId", "Internal identifier for an inlined fragment"))
   val Location = Field(Str,
                        Document + "location",
                        ModelDoc(ModelVocabularies.AmlDoc, "location", "Location of an inlined fragment"))
@@ -28,7 +28,7 @@ object ExternalSourceElementModel extends ExternalSourceElementModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.AmlDoc,
-    "External Source Element",
+    "ExternalSourceElement",
     "Inlined fragment of information"
   )
 }

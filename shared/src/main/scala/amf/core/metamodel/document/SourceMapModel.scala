@@ -28,7 +28,7 @@ object SourceMapModel extends Obj {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.AmlDoc,
-    "Source Map",
+    "SourceMap",
     "SourceMaps include tags with syntax specific information obtained when parsing a particular specification syntax like RAML or OpenAPI.\nIt can be used to re-generate the document from the RDF model with a similar syntax"
   )
 }

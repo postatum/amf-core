@@ -12,7 +12,7 @@ trait DisplayNameField {
   val DisplayName = Field(
     Str,
     Core + "displayName",
-    ModelDoc(ModelVocabularies.Core, "display name", "Human readable name for the term"))
+    ModelDoc(ModelVocabularies.Core, "displayName", "Human readable name for the term"))
 }
 
 object DisplayNameField extends DisplayNameField

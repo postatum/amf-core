@@ -9,7 +9,7 @@ import amf.core.vocabulary.ValueType
 object ShapeExtensionModel extends DomainElementModel {
   val DefinedBy = Field(CustomDomainPropertyModel,
                         Document + "definedBy",
-                        ModelDoc(ModelVocabularies.AmlDoc, "defined by", "Definition for the extended entity"))
+                        ModelDoc(ModelVocabularies.AmlDoc, "definedBy", "Definition for the extended entity"))
   val Extension = Field(DataNodeModel,
                         Document + "extension",
                         ModelDoc(ModelVocabularies.AmlDoc, "extension", "Data structure associated to the extension"))
@@ -22,7 +22,7 @@ object ShapeExtensionModel extends DomainElementModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.ApiContract,
-    "Shape Extension",
+    "ShapeExtension",
     "Custom extensions for a data shape definition inside an API definition"
   )
 }

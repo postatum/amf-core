@@ -168,7 +168,7 @@ class ObjectNode(override val fields: Fields, val annotations: Annotations) exte
 
     override val doc: ModelDoc = ModelDoc(
       ModelVocabularies.Data,
-      "Object Node",
+      "ObjectNode",
       "Node that represents a dynamic object with records data structure"
     )
   }

@@ -62,7 +62,7 @@ trait DomainElementModel extends Obj with ModelDefaultBuilder {
   // This creates a cycle in the among DomainModels, triggering a classnotdef problem
   // I need lazy evaluation here.
   // It cannot even be defined in the list of fields below
-  lazy val CustomDomainProperties = Field(Array(DomainExtensionModel), Document + "customDomainProperties", ModelDoc(ModelVocabularies.AmlDoc,"custom domain properties", "Extensions provided for a particular domain element."))
+  lazy val CustomDomainProperties = Field(Array(DomainExtensionModel), Document + "customDomainProperties", ModelDoc(ModelVocabularies.AmlDoc,"customDomainProperties", "Extensions provided for a particular domain element."))
 
 }
 
@@ -80,7 +80,7 @@ object DomainElementModel extends DomainElementModel {
 
   override val doc : ModelDoc = ModelDoc(
     vocabulary = ModelVocabularies.AmlDoc,
-    displayName = "Domain element",
+    displayName = "DomainElement",
     description = "Base class for any element describing a domain model. Domain Elements are encoded or declared into base units",
   )
 }

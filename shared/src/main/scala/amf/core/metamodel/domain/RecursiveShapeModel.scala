@@ -27,7 +27,7 @@ object RecursiveShapeModel extends ShapeModel {
 
   override val doc: ModelDoc = ModelDoc(
     ModelVocabularies.Shapes,
-    "Recursive Shape",
+    "RecursiveShape",
     "Recursion on a Shape structure, used when expanding a shape and finding the canonical representation of that shape."
   )
 }
