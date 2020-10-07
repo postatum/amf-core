@@ -8,7 +8,7 @@ object GraphDependenciesReferenceHandler extends ReferenceHandler {
 
   val graphDependenciesPredicate: String = (Namespace.Document + "graphDependencies").iri()
 
-  override def collect(inputParsed: ParsedDocument, ctx: ParserContext): ReferenceCollector = {
+  override def collect(inputParsed: ParsedDocument, ctx: ParserContext): CompilerReferenceCollector = {
     inputParsed match {
       case parsed: SyamlParsedDocument =>
         val document  = parsed.document
@@ -26,7 +26,7 @@ object GraphDependenciesReferenceHandler extends ReferenceHandler {
     }
   }
 
-  protected def processDependencyEntry(entry: YMapEntry): ReferenceCollector = {
+  protected def processDependencyEntry(entry: YMapEntry): CompilerReferenceCollector = {
     entry.value.tagType match {
       case YType.Seq =>
         val links: IndexedSeq[Option[(String, YNode)]] = entry.value.as[YSequence].nodes.map { node =>
@@ -35,7 +35,7 @@ object GraphDependenciesReferenceHandler extends ReferenceHandler {
             case _         => None
           }
         }
-        val collector = ReferenceCollector()
+        val collector = CompilerReferenceCollector()
         links.foreach {
           case Some((link, linkEntry)) => collector += (link, UnspecifiedReference, linkEntry)
           case _                       =>

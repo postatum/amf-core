@@ -7,7 +7,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait ReferenceHandler {
 
   /** Collect references on given document. */
-  def collect(document: ParsedDocument, ctx: ParserContext): ReferenceCollector
+  def collect(document: ParsedDocument, ctx: ParserContext): CompilerReferenceCollector
 
   /** Update parsed reference if needed. */
   def update(reference: ParsedReference, compilerContext: CompilerContext)(
@@ -18,5 +18,5 @@ trait ReferenceHandler {
 object SimpleReferenceHandler extends ReferenceHandler {
 
   /** Collect references on given document. */
-  override def collect(document: ParsedDocument, ctx: ParserContext): ReferenceCollector = EmptyReferenceCollector
+  override def collect(document: ParsedDocument, ctx: ParserContext): CompilerReferenceCollector = EmptyReferenceCollector
 }

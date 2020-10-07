@@ -40,21 +40,21 @@ case class RefContainer(linkType: ReferenceKind, node: YNode, fragment: Option[S
     }
 }
 
-case class ReferenceCollector() {
-  private val refs = mutable.Map[String, Reference]()
+case class CompilerReferenceCollector() {
+  private val collector = DefaultReferenceCollector[Reference]()
 
   def +=(key: String, kind: ReferenceKind, node: YNode): Unit = {
     val (url, fragment) = ReferenceFragmentPartition(key)
-    refs.get(url) match {
-      case Some(reference: Reference) => refs.update(url, reference + (kind, node, fragment))
-      case None                       => refs += url -> Reference(url, kind, node, fragment)
+    collector.get(url) match {
+      case Some(reference: Reference) => collector += (url, reference + (kind, node, fragment))
+      case None                       => collector += (url, Reference(url, kind, node, fragment))
     }
   }
 
-  def toReferences: Seq[Reference] = refs.values.toSeq
+  def toReferences: Seq[Reference] = collector.references()
 }
 
-object EmptyReferenceCollector extends ReferenceCollector {}
+object EmptyReferenceCollector extends CompilerReferenceCollector {}
 
 /**
   * Splits references between their base url and local path

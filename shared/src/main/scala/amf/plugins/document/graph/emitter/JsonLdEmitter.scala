@@ -95,7 +95,6 @@ class JsonLdEmitter[T](val builder: DocBuilder[T], val options: RenderOptions)(i
     val sources = SourceMap(id, element)
 
     val obj = metaModel(element)
-
     traverseMetaModel(id, element, sources, obj, b)
 
     createCustomExtensions(element, b)

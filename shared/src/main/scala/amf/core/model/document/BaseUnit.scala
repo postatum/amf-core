@@ -11,7 +11,7 @@ import amf.core.metamodel.{Field, MetaModelTypeMapping, Obj}
 import amf.core.model.document.FieldsFilter.Local
 import amf.core.model.domain._
 import amf.core.model.{BoolField, StrField}
-import amf.core.parser.{FieldEntry, ParserContext, Value}
+import amf.core.parser.{FieldEntry, ParserContext, ReferenceCollector, Value}
 import amf.core.rdf.{RdfModel, RdfModelParser}
 import amf.core.remote.Vendor
 import amf.core.traversal.{DomainElementSelectorAdapter, DomainElementTransformationAdapter, TransformationData, TransformationTraversal}
