@@ -33,9 +33,7 @@ import scala.collection.mutable.ListBuffer
 /**
   * AMF Graph parser
   */
-class ExpandedGraphParser()(implicit val ctx: GraphParserContext)
-    extends GraphParserHelpers
-    with GraphParser {
+class ExpandedGraphParser()(implicit val ctx: GraphParserContext) extends GraphParserHelpers with GraphParser {
 
   override def canParse(document: SyamlParsedDocument): Boolean = ExpandedGraphParser.canParse(document)
 
@@ -52,14 +50,18 @@ class ExpandedGraphParser()(implicit val ctx: GraphParserContext)
     private val referencesMap = mutable.Map[String, DomainElement]()
 
     def parse(document: YDocument, location: String): BaseUnit = {
-      val maybeMaps = document.node.toOption[Seq[YMap]]
-      val maybeMap  = maybeMaps.flatMap(s => s.headOption)
-      val maybeMaybeObject = maybeMap.flatMap(map => {
-        map.key("@context").foreach(e => parseCompactUris(e.value))
-        parse(map)
-      })
+      val parsedOption = for {
+        seq  <- document.node.toOption[Seq[YMap]]
+        head <- seq.headOption
+        parsed <- {
+          head.key("@context", e => JsonLdGraphContextParser(e.value, ctx.graphContext).parse())
+          parse(head)
+        }
+      } yield {
+        parsed
+      }
 
-      maybeMaybeObject match {
+      parsedOption match {
         case Some(unit: BaseUnit) => unit.set(Location, location)
         case _ =>
           ctx.eh.violation(UnableToParseDocument, location, s"Unable to parse $document", document)
@@ -133,7 +135,7 @@ class ExpandedGraphParser()(implicit val ctx: GraphParserContext)
                 instance match {
                   case l: DomainElement with Linkable =>
                     parseLinkableProperties(map, l)
-                  case ex: ExternalDomainElement if unresolvedExtReferencesMap.get(ex.id).isDefined =>
+                  case ex: ExternalDomainElement if unresolvedExtReferencesMap.contains(ex.id) =>
                     unresolvedExtReferencesMap.get(ex.id).foreach { element =>
                       ex.raw
                         .option()
@@ -283,6 +285,15 @@ class ExpandedGraphParser()(implicit val ctx: GraphParserContext)
     }
 
     private def traverse(instance: AmfObject, f: Field, node: YNode, sources: SourceMap, key: String) = {
+      if (assertFieldTypeWithContext(f)(ctx)) {
+        doTraverse(instance, f, node, sources, key)
+      }
+      else {
+        instance
+      }
+    }
+
+    private def doTraverse(instance: AmfObject, f: Field, node: YNode, sources: SourceMap, key: String) = {
       f.`type` match {
         case _: Obj =>
           parse(node.as[YMap]).foreach(n => instance.set(f, n, annotations(nodes, sources, key)))

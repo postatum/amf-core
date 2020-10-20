@@ -1,6 +1,6 @@
 package amf.plugins.document.graph.parser
 
-import amf.core.metamodel.{Obj, Type}
+import amf.core.metamodel.{Field, Obj, Type}
 import amf.core.metamodel.Type._
 import amf.core.metamodel.document.SourceMapModel
 import amf.core.metamodel.domain.DomainElementModel
@@ -15,7 +15,7 @@ import org.yaml.convert.YRead.SeqNodeYRead
 import org.yaml.model._
 import amf.core.model.DataType
 
-import scala.collection.mutable
+import scala.collection.{immutable, mutable}
 
 trait GraphParserHelpers extends GraphContextHelper {
 
@@ -120,6 +120,34 @@ trait GraphParserHelpers extends GraphContextHelper {
           case _ => AmfScalar(nodeValue)
         }
       case _ => AmfScalar(node.as[YScalar].text)
+    }
+  }
+
+  def defineField(field: Field)(ctx: GraphParserContext): Option[TermDefinition] = {
+    ctx.graphContext
+      .definitions()
+      .find {
+        case (term, _) => equal(term, field.value.iri())(ctx.graphContext)
+      }
+      .map {
+        case (_, definition) => definition
+      }
+  }
+
+  def assertFieldTypeWithContext(field: Field)(ctx: GraphParserContext): Boolean = {
+    val contextDefinition = defineField(field)(ctx)
+    contextDefinition match {
+      case Some(definition: ExpandedTermDefinition) =>
+        assertFieldTypeWithDefinition(field, definition)(ctx)
+      case _ => true
+    }
+  }
+
+  private def assertFieldTypeWithDefinition(field: Field, definition: ExpandedTermDefinition)(
+      ctx: GraphParserContext) = {
+    definition.`type`.forall { typeFromCtxDefinition =>
+      val fieldTypes: immutable.Seq[ValueType] = field.`type`.`type`
+      fieldTypes.exists(fieldType => equal(fieldType.iri(), typeFromCtxDefinition)(ctx.graphContext))
     }
   }
 
@@ -270,57 +298,24 @@ trait GraphParserHelpers extends GraphContextHelper {
   }
 }
 
-abstract class GraphContextHelper {
+abstract class GraphContextHelper extends GraphContextOperations {
 
   protected def expandUriFromContext(iri: String)(implicit ctx: GraphParserContext): String = {
-    ctx.compactUris.find { case (key, _) => iri.startsWith(key) } match {
-      case Some((key, value)) => iri.replace(key + ':', value)
-      case None               => iri
-    }
+    expand(iri)(ctx.graphContext)
   }
 
   protected def compactUriFromContext(iri: String)(implicit ctx: GraphParserContext): String = {
-    ctx.compactUris.find { case (_, value) => iri.startsWith(value) } match {
-      case Some((key, value)) => iri.replace(value, key + ':')
-      case None               => iri
-    }
-  }
-
-  private def baseParent(base: String): String = {
-    val idx = base.lastIndexOf("/")
-    base.substring(0, idx)
+    compact(iri)(ctx.graphContext)
   }
 
   protected def transformIdFromContext(id: String)(implicit ctx: GraphParserContext): String = {
-    val prefixOption = ctx.baseId.map { base =>
-      if (id.startsWith("./")) baseParent(base) + "/"
-      else base
+    val prefixOption = ctx.graphContext.base.map { base =>
+      if (id.startsWith("./")) base.parent.iri + "/"
+      else base.iri
     }
     val prefix = prefixOption.getOrElse("")
 
     s"$prefix$id"
-  }
-
-  protected def parseCompactUris(contextNode: YNode)(implicit ctx: GraphParserContext): Unit = {
-    ctx.compactUris ++= buildContextMap(contextNode)
-    ctx.baseId = ctx.compactUris.find { case (key, _) => key == "@base" }.map { case (_, value) => value }
-  }
-
-  protected def parseKeyValue(entry: YMapEntry): Option[(String, String)] = {
-    (entry.key.tagType, entry.value.tagType) match {
-      case (YType.Str, YType.Str) =>
-        Some(entry.key.as[YScalar].text -> entry.value.as[YScalar].text)
-      case _ => None
-    }
-  }
-
-  protected def buildContextMap(contextNode: YNode): Map[String, String] = {
-    contextNode.tagType match {
-      case YType.Map =>
-        val m: YMap = contextNode.as[YMap]
-        m.entries.flatMap(parseKeyValue).toMap
-      case _ => Map.empty
-    }
   }
 
 }

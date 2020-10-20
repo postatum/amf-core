@@ -14,8 +14,10 @@ import amf.core.parser._
 import amf.core.registries.AMFDomainRegistry
 import amf.core.remote.Platform
 import amf.core.unsafe.TrunkPlatform
+import amf.core.vocabulary.Namespace.XsdTypes.xsdBoolean
 import amf.core.vocabulary.{Namespace, ValueType}
 import amf.plugins.document.graph.MetaModelHelper._
+import amf.plugins.document.graph.parser.FlattenedGraphParser.isRootNode
 import amf.plugins.features.validation.CoreValidations.{
   NodeNotFound,
   NotLinkable,
@@ -59,7 +61,7 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
     def parse(document: YDocument, location: String): BaseUnit = {
       document.node.value match {
         case documentMap: YMap =>
-          documentMap.key("@context").foreach(e => parseCompactUris(e.value))
+          documentMap.key("@context").foreach(e => JsonLdGraphContextParser(e.value, ctx.graphContext).parse())
           documentMap.key("@graph").flatMap { e =>
             parseGraph(e.value)
           } match {
@@ -111,7 +113,7 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
     private def parseSelfEncodedBaseUnit(rootNode: YMap): Option[BaseUnit] = {
       val parsed = for {
         id           <- retrieveId(rootNode, ctx)
-        encodesModel <- retrieveTypeIgnoring(id, rootNode, BaseUnitModel.`type` :+ (Namespace.Meta + "DialectInstance"))
+        encodesModel <- retrieveTypeIgnoring(id, rootNode, documentIris)
         // we need to pass the doc namespaces so a change in the order of the declaration of a self-encoded domain-element
         // does not take precedence over the AML document models
         unitModel <- retrieveTypeFrom(id, rootNode, documentIris)
@@ -153,11 +155,7 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
 
     private def getRootNodeFromGraphMap: Option[YMap] = {
       graphMap.values.find { node =>
-        node.entries
-          .find { entry =>
-            expandUriFromContext(entry.key.as[String]) == BaseUnitModel.Root.value.iri()
-          }
-          .exists(entry => entry.value.as[Boolean])
+        isRootNode(node)
       }
     }
 
@@ -165,12 +163,12 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
 
     private def retrieveTypeFrom(id: String, map: YMap, from: Seq[ValueType]): Option[Obj] = {
       val expectedIris = from.map(_.iri())
-      this.retrieveTypeCondition(id, map, (t) => expectedIris.contains(t))
+      this.retrieveTypeCondition(id, map, (t) => expectedIris.exists(iri => equal(t, iri)(ctx.graphContext)))
     }
 
     private def retrieveTypeIgnoring(id: String, map: YMap, ignored: Seq[ValueType]): Option[Obj] = {
       val ignoredIris = ignored.map(_.iri())
-      this.retrieveTypeCondition(id, map, (t) => !ignoredIris.contains(t))
+      this.retrieveTypeCondition(id, map, (t) => !ignoredIris.exists(iri => equal(t, iri)(ctx.graphContext)))
     }
 
     /**
@@ -184,7 +182,9 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
       // this returns a certain order, we will return the first one that matches, but many could match
       // first non-documents (including AML documents, dialect instances, dialects, vocabs, etc) are returned
       // then the base document models are returned in sorted order: Document, Fragment, Module
-      val typeIris = ts(map, id).filter(pred) // we are filtering the list with the provided condition
+      val typeIris = ts(map, id)
+        .filter(pred) // we are filtering the list with the provided condition
+        .map(expandUriFromContext) // expand iris
 
       typeIris.find(findType(_).isDefined) match {
         case Some(t) => findType(t)
@@ -222,7 +222,8 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
     private def parse(map: YMap): Option[AmfObject] = { // todo fix uses
       if (isReferenceNode(map)) {
         parseReferenceNode(map)
-      } else {
+      }
+      else {
         for {
           id           <- retrieveId(map, ctx)
           model        <- retrieveType(id, map)
@@ -281,7 +282,7 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
 
     private def traverseFields(map: YMap, fields: Seq[Field], instance: AmfObject, sources: SourceMap): Unit = {
       fields.foreach(f => {
-        val k = compactUriFromContext(f.value.iri())
+        val k = compactUriFromContext(f.value.iri()) // we are assuming compact uris, we shouldn't!
         map.key(k) match {
           case Some(entry) =>
             traverse(instance, f, value(f.`type`, entry.value), sources, k)
@@ -434,7 +435,8 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
         val fieldUri        = expandUriFromContext(entry.key.as[String])
         val fieldValue      = entry.value
         val isAlreadyParsed = fields.exists(_.value.iri() == fieldUri)
-        if (!ignoredFields.contains(fieldUri) && !isAlreadyParsed) { // we do this to prevent parsing name of annotations
+        if (!ignoredFields
+              .contains(fieldUri) && !isAlreadyParsed) { // we do this to prevent parsing name of annotations
           parse(fieldValue.as[YMap]).collect {
             case d: amf.core.model.domain.DataNode => obj.addProperty(fieldUri, d)
           }
@@ -444,7 +446,15 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
 
     private def isReferenceNode(m: YMap): Boolean = m.entries.size == 1 && m.key("@id").isDefined
 
-    private def traverse(instance: AmfObject, f: Field, node: YNode, sources: SourceMap, key: String) = {
+    private def traverse(instance: AmfObject, f: Field, node: YNode, sources: SourceMap, key: String): AmfObject = {
+      if (assertFieldTypeWithContext(f)(ctx)) {
+        doTraverse(instance, f, node, sources, key)
+      } else {
+        instance
+      }
+    }
+
+    private def doTraverse(instance: AmfObject, f: Field, node: YNode, sources: SourceMap, key: String) = {
       f.`type` match {
         case _: Obj =>
           parse(node.as[YMap]).foreach(n => instance.set(f, n, annotations(nodes, sources, key)))
@@ -471,7 +481,7 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
         case a: Array =>
           val items = node.as[Seq[YNode]]
           val values: Seq[AmfElement] = a.element match {
-            case _: Obj    => items.flatMap(n => parse(n.as[YMap]))
+            case _: Obj => items.flatMap(n => parse(n.as[YMap]))
             case Str | Iri => items.map(n => str(value(a.element, n)))
           }
           a.element match {
@@ -533,7 +543,7 @@ class FlattenedGraphParser()(implicit val ctx: GraphParserContext) extends Graph
 object FlattenedGraphParser extends GraphContextHelper with GraphParserHelpers {
   def apply(): FlattenedGraphParser =
     new FlattenedGraphParser()(
-      new GraphParserContext(eh = DefaultParserErrorHandler.withRun())
+        new GraphParserContext(eh = DefaultParserErrorHandler.withRun())
     )
 
   /**
@@ -547,9 +557,9 @@ object FlattenedGraphParser extends GraphContextHelper with GraphParserHelpers {
     document.document.node.value match {
       case m: YMap =>
         implicit val ctx: GraphParserContext = new GraphParserContext(
-          eh = IgnoringErrorHandler()
+            eh = IgnoringErrorHandler()
         )
-        m.key("@context").foreach(entry => parseCompactUris(entry.value))
+        m.key("@context").foreach(entry => JsonLdGraphContextParser(entry.value, ctx.graphContext).parse())
         m.key("@graph") match {
           case Some(graphEntry) =>
             val graphYSeq = graphEntry.value.as[YSequence]
@@ -566,13 +576,26 @@ object FlattenedGraphParser extends GraphContextHelper with GraphParserHelpers {
     node.value match {
       case map: YMap =>
         val isBaseUnit = nodeIsOfType(node, BaseUnitModel)
-        val isRoot = map.entries.exists(entry => {
-          val key = expandUriFromContext(entry.key.as[String])
-          BaseUnitModel.Root.value.iri() == key && entry.value.as[Boolean]
+        lazy val isRoot = map.entries.exists(entry => {
+          val key       = entry.key.as[String]
+          val isRootIri = equal(BaseUnitModel.Root.value.iri(), key)(ctx.graphContext)
+          val isRootValue = entry.value.tagType match {
+            case YType.Str =>
+              ctx.graphContext.define(key) match {
+                case Some(expandedTermDefinition: ExpandedTermDefinition) =>
+                  expandedTermDefinition.`type`.exists { t =>
+                    equal(t, xsdBoolean.iri())(ctx.graphContext) && entry.value.as[String] == "true"
+                  }
+                case _ => false
+              }
+            case YType.Bool =>
+              entry.value.as[Boolean]
+            case _ => false
+          }
+          isRootIri && isRootValue
         })
         isBaseUnit && isRoot
       case _ => false
     }
-
   }
 }
