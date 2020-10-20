@@ -4,6 +4,7 @@ import amf.core.vocabulary.Namespace.{Shapes, Xsd}
 
 object DataType {
 
+  // Repeated logic with XsdTypes
   val String: String       = Xsd.base + "string"
   val Integer: String      = Xsd.base + "integer"
   val Number: String       = Shapes.base + "number"
