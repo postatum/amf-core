@@ -1,7 +1,8 @@
 package amf.core.remote
 
-import scala.scalajs.js.annotation.JSExportTopLevel
+import scala.scalajs.js.annotation.{JSExport, JSExportAll, JSExportTopLevel}
 
+@JSExportAll
 @JSExportTopLevel("core.Vendor")
 object Vendor {
   def unapply(name: String): Option[Vendor] = {
@@ -21,6 +22,7 @@ object Vendor {
     }
   }
 
+  @JSExport("apply")
   def apply(name: String): Vendor = name match {
     case Vendor(vendor) => vendor
     case _              => new UnknowVendor(name)
