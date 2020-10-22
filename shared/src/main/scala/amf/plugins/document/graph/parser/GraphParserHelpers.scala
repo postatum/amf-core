@@ -1,21 +1,155 @@
 package amf.plugins.document.graph.parser
 
-import amf.core.metamodel.{Obj, Type}
+import amf.core.metamodel.{Field, Obj, Type}
 import amf.core.metamodel.Type._
 import amf.core.metamodel.document.SourceMapModel
 import amf.core.metamodel.domain.DomainElementModel
 import amf.core.model.document.SourceMap
-import amf.core.model.domain.{AmfElement, Annotation}
+import amf.core.model.domain.{AmfElement, AmfScalar, Annotation}
 import amf.core.parser.{Annotations, _}
 import amf.core.vocabulary.{Namespace, ValueType}
 import amf.core.vocabulary.Namespace.SourceMaps
 import amf.plugins.features.validation.CoreValidations.{MissingIdInNode, MissingTypeInNode, namespace}
+import org.mulesoft.common.time.SimpleDateTime
 import org.yaml.convert.YRead.SeqNodeYRead
 import org.yaml.model._
+import amf.core.model.DataType
 
-import scala.collection.mutable
+import scala.collection.{immutable, mutable}
 
 trait GraphParserHelpers extends GraphContextHelper {
+
+  protected def float(node: YNode): AmfScalar = {
+    val value = node.tagType match {
+      case YType.Map =>
+        node.as[YMap].entries.find(_.key.as[String] == "@value") match {
+          case Some(entry) =>
+            entry.value.as[YScalar].text.toDouble
+          case _ => node.as[YScalar].text.toDouble
+        }
+      case _ => node.as[YScalar].text.toDouble
+    }
+    AmfScalar(value)
+  }
+
+  protected def str(node: YNode): AmfScalar = {
+    val value = node.tagType match {
+      case YType.Map =>
+        node.as[YMap].entries.find(_.key.as[String] == "@value") match {
+          case Some(entry) => entry.value.as[YScalar].text
+          case _           => node.as[YScalar].text
+        }
+      case _ => node.as[YScalar].text
+    }
+    AmfScalar(value)
+  }
+
+  protected def bool(node: YNode): AmfScalar = {
+    val value = node.tagType match {
+      case YType.Map =>
+        node.as[YMap].entries.find(_.key.as[String] == "@value") match {
+          case Some(entry) => entry.value.as[YScalar].text.toBoolean
+          case _           => node.as[YScalar].text.toBoolean
+        }
+      case _ => node.as[YScalar].text.toBoolean
+    }
+    AmfScalar(value)
+  }
+
+  protected def int(node: YNode): AmfScalar = {
+    val value = node.tagType match {
+      case YType.Map =>
+        node.as[YMap].entries.find(_.key.as[String] == "@value") match {
+          case Some(entry) => entry.value.as[YScalar].text.toInt
+          case _           => node.as[YScalar].text.toInt
+        }
+      case _ => node.as[YScalar].text.toInt
+    }
+    AmfScalar(value)
+  }
+
+  protected def double(node: YNode): AmfScalar = {
+    val value = node.tagType match {
+      case YType.Map =>
+        node.as[YMap].entries.find(_.key.as[String] == "@value") match {
+          case Some(entry) => entry.value.as[YScalar].text.toDouble
+          case _           => node.as[YScalar].text.toDouble
+        }
+      case _ => node.as[YScalar].text.toDouble
+    }
+    AmfScalar(value)
+  }
+
+  protected def date(node: YNode): AmfScalar = {
+    val value = node.tagType match {
+      case YType.Map =>
+        node.as[YMap].entries.find(_.key.as[String] == "@value") match {
+          case Some(entry) =>
+            SimpleDateTime.parse(entry.value.as[YScalar].text).right.get
+          case _ => SimpleDateTime.parse(node.as[YScalar].text).right.get
+        }
+      case _ => SimpleDateTime.parse(node.as[YScalar].text).right.get
+    }
+    AmfScalar(value)
+  }
+
+  protected def any(node: YNode)(implicit ctx: GraphParserContext): AmfScalar = {
+    node.tagType match {
+      case YType.Map =>
+        val nodeValue =
+          node.as[YMap].entries.find(_.key.as[String] == "@value") match {
+            case Some(entry) => entry.value.as[YScalar].text
+            case _           => node.as[YScalar].text
+          }
+        node.as[YMap].entries.find(_.key.as[String] == "@type") match {
+          case Some(typeEntry) =>
+            val typeUri     = typeEntry.value.as[YScalar].text
+            val expandedUri = expandUriFromContext(typeUri)
+            expandedUri match {
+              case s: String if s == DataType.Boolean =>
+                AmfScalar(nodeValue.toBoolean)
+              case s: String if s == DataType.Integer => AmfScalar(nodeValue.toInt)
+              case s: String if s == DataType.Float   => AmfScalar(nodeValue.toFloat)
+              case s: String if s == DataType.Double  => AmfScalar(nodeValue.toDouble)
+              case s: String if s == DataType.DateTime =>
+                AmfScalar(SimpleDateTime.parse(nodeValue).right.get)
+              case s: String if s == DataType.Date =>
+                AmfScalar(SimpleDateTime.parse(nodeValue).right.get)
+              case _ => AmfScalar(nodeValue)
+            }
+          case _ => AmfScalar(nodeValue)
+        }
+      case _ => AmfScalar(node.as[YScalar].text)
+    }
+  }
+
+  def defineField(field: Field)(ctx: GraphParserContext): Option[TermDefinition] = {
+    ctx.graphContext
+      .definitions()
+      .find {
+        case (term, _) => equal(term, field.value.iri())(ctx.graphContext)
+      }
+      .map {
+        case (_, definition) => definition
+      }
+  }
+
+  def assertFieldTypeWithContext(field: Field)(ctx: GraphParserContext): Boolean = {
+    val contextDefinition = defineField(field)(ctx)
+    contextDefinition match {
+      case Some(definition: ExpandedTermDefinition) =>
+        assertFieldTypeWithDefinition(field, definition)(ctx)
+      case _ => true
+    }
+  }
+
+  private def assertFieldTypeWithDefinition(field: Field, definition: ExpandedTermDefinition)(
+      ctx: GraphParserContext) = {
+    definition.`type`.forall { typeFromCtxDefinition =>
+      val fieldTypes: immutable.Seq[ValueType] = field.`type`.`type`
+      fieldTypes.exists(fieldType => equal(fieldType.iri(), typeFromCtxDefinition)(ctx.graphContext))
+    }
+  }
 
   protected def nodeIsOfType(node: YNode, obj: Obj)(implicit ctx: GraphParserContext): Boolean = {
     node.value match {
@@ -58,15 +192,15 @@ trait GraphParserHelpers extends GraphContextHelper {
   // declared so they can be referenced from the retrieveType* functions
   val amlDocumentIris: Seq[ValueType] =
     asIris(
-      Namespace.Meta,
-      Seq("DialectInstance",
-          "DialectInstanceFragment",
-          "DialectInstanceLibrary",
-          "DialectInstancePatch",
-          "DialectLibrary",
-          "DialectFragment",
-          "Dialect",
-          "Vocabulary")
+        Namespace.Meta,
+        Seq("DialectInstance",
+            "DialectInstanceFragment",
+            "DialectInstanceLibrary",
+            "DialectInstancePatch",
+            "DialectLibrary",
+            "DialectFragment",
+            "Dialect",
+            "Vocabulary")
     )
 
   val coreDocumentIris: Seq[ValueType] =
@@ -164,57 +298,24 @@ trait GraphParserHelpers extends GraphContextHelper {
   }
 }
 
-abstract class GraphContextHelper {
+abstract class GraphContextHelper extends GraphContextOperations {
 
   protected def expandUriFromContext(iri: String)(implicit ctx: GraphParserContext): String = {
-    ctx.compactUris.find { case (key, _) => iri.startsWith(key) } match {
-      case Some((key, value)) => iri.replace(key + ':', value)
-      case None               => iri
-    }
+    expand(iri)(ctx.graphContext)
   }
 
   protected def compactUriFromContext(iri: String)(implicit ctx: GraphParserContext): String = {
-    ctx.compactUris.find { case (_, value) => iri.startsWith(value) } match {
-      case Some((key, value)) => iri.replace(value, key + ':')
-      case None               => iri
-    }
-  }
-
-  private def baseParent(base: String): String = {
-    val idx = base.lastIndexOf("/")
-    base.substring(0, idx)
+    compact(iri)(ctx.graphContext)
   }
 
   protected def transformIdFromContext(id: String)(implicit ctx: GraphParserContext): String = {
-    val prefixOption = ctx.baseId.map { base =>
-      if (id.startsWith("./")) baseParent(base) + "/"
-      else base
+    val prefixOption = ctx.graphContext.base.map { base =>
+      if (id.startsWith("./")) base.parent.iri + "/"
+      else base.iri
     }
     val prefix = prefixOption.getOrElse("")
 
     s"$prefix$id"
-  }
-
-  protected def parseCompactUris(contextNode: YNode)(implicit ctx: GraphParserContext): Unit = {
-    ctx.compactUris ++= buildContextMap(contextNode)
-    ctx.baseId = ctx.compactUris.find { case (key, _) => key == "@base" }.map { case (_, value) => value }
-  }
-
-  protected def parseKeyValue(entry: YMapEntry): Option[(String, String)] = {
-    (entry.key.tagType, entry.value.tagType) match {
-      case (YType.Str, YType.Str) =>
-        Some(entry.key.as[YScalar].text -> entry.value.as[YScalar].text)
-      case _ => None
-    }
-  }
-
-  protected def buildContextMap(contextNode: YNode): Map[String, String] = {
-    contextNode.tagType match {
-      case YType.Map =>
-        val m: YMap = contextNode.as[YMap]
-        m.entries.flatMap(parseKeyValue).toMap
-      case _ => Map.empty
-    }
   }
 
 }

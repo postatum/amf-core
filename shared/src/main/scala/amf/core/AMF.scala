@@ -45,7 +45,7 @@ object AMF {
 
   protected def processInitializations(plugins: Seq[AMFPlugin])(implicit executionContext: ExecutionContext): Future[Unit] = {
     if (plugins.isEmpty) {
-      Future {}
+      Future.successful(Unit)
     } else {
       val nextPlugin = plugins.head
       if (initializedPlugins.contains(nextPlugin.ID)) {
